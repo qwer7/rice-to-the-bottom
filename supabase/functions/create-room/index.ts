@@ -23,11 +23,24 @@ Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
     const { admin, user } = await context(request)
-    const { action, hubId, hubCode, key, name } = await request.json()
+    const { action, hubId, hubCode, key, name, displaySecret } = await request.json()
     if (action === 'open-display') {
-      const {data: display,error} = await admin.rpc('open_display_lobby',{p_user:user.id,p_code:code(),p_hub_code:code(),p_state:createDisplayLobby()})
-      if (error || !display) throw new Error('Не удалось открыть лобби на доске. Повторите подключение')
+      if (typeof displaySecret !== 'string' || displaySecret.length < 32 || displaySecret.length > 128) throw new Error('Не удалось проверить ключ доски')
+      const args = {p_user:user.id,p_hub:hubId ?? null,p_secret_hash:await hashHubKey(displaySecret),p_code:code(),p_hub_code:code(),p_state:createDisplayLobby()}
+      let {data: display,error} = await admin.rpc('open_display_v2',args)
+      if (hubId && error?.message?.includes('DISPLAY_NOT_FOUND')) ({data:display,error} = await admin.rpc('open_display_v2',{...args,p_hub:null}))
+      if (error || !display) throw new Error(error?.message?.includes('DISPLAY_NOT_FOUND') ? 'Доска больше не существует' : 'Не удалось открыть доску. Проверьте подключение и данные устройства')
       return response({hub:display,...await snapshot(admin,display.sessionId,user.id)})
+    }
+    if (action === 'rotate-display-code' || action === 'reset-display') {
+      if (typeof hubId !== 'string' || typeof displaySecret !== 'string' || displaySecret.length < 32 || displaySecret.length > 128) throw new Error('Не удалось проверить ключ доски')
+      for (let attempt=0; attempt<5; attempt++) {
+        const {data: display,error} = await admin.rpc('change_display_v2',{p_user:user.id,p_hub:hubId,p_secret_hash:await hashHubKey(displaySecret),p_action:action === 'reset-display' ? 'reset' : 'rotate',p_code:code(),p_hub_code:code(),p_state:createDisplayLobby()})
+        if (error?.code === '23505') continue
+        if (error || !display) throw new Error('Не удалось изменить доску. Проверьте подключение и повторите попытку')
+        return response({hub:display,...await snapshot(admin,display.sessionId,user.id)})
+      }
+      throw new Error('Не удалось выбрать новый код. Повторите попытку')
     }
     if (action === 'create-hub') {
       const mainKey = newHubKey()

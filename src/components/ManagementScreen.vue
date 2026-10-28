@@ -20,8 +20,7 @@ async function create() { localStorage.setItem('race-to-the-bottom:display-name'
           <button class="btn btn--primary" :disabled="store.busy || store.players.length < 2" @click="store.action('start')">Начать партию</button>
         </template>
         <p v-else class="muted">Раунд {{ store.round }} / {{ store.totalRounds }} · {{ store.phase === 'playing' ? 'игроки делают ходы' : store.phase === 'reveal' ? 'карты раскрыты' : 'партия завершена' }}</p>
-        <button v-if="store.game?.lobbyMode === 'first-player'" class="btn btn--primary" :disabled="store.busy" @click="confirmation = 'new-lobby'">Новое лобби</button>
-        <button v-if="store.game?.lobbyMode !== 'first-player' && store.phase !== 'lobby'" class="btn" :disabled="store.busy" @click="confirmation = 'reset'">{{ store.phase === 'finished' ? 'Играть снова' : 'Сбросить партию' }}</button>
+        <button v-if="store.phase !== 'lobby'" class="btn" :disabled="store.busy" @click="confirmation = 'reset'">{{ store.phase === 'finished' ? 'Играть снова' : 'Сбросить партию' }}</button>
         <button v-if="store.game?.lobbyMode !== 'first-player'" class="btn btn--danger" :disabled="store.busy" @click="confirmation = 'close'">Закрыть лобби</button>
       </template>
       <div v-else role="alertdialog" aria-label="Подтверждение управления партией" class="stack"><p>{{ confirmation === 'new-lobby' ? 'Открыть новое лобби с новым кодом? Вы останетесь лидером, остальные игроки подключатся заново. Доска переключится автоматически.' : confirmation === 'close' ? 'Закрыть лобби для всех участников?' : 'Вернуть всех в лобби? Капитал и карты будут выданы заново.' }}</p><button class="btn" @click="confirmation = null">Отмена</button><button class="btn btn--danger" :disabled="store.busy" @click="confirmAction">Подтвердить</button></div>

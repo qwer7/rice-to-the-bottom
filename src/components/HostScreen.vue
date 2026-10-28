@@ -11,12 +11,36 @@ import { useGameStore } from '@/stores/gameStore'
 const store = useGameStore()
 const { tv } = useDisplayMode()
 const dismissedRound = ref(0)
+const settingsOpen = ref(false)
+const confirmation = ref<'rotate-display-code' | 'reset-display' | null>(null)
+async function confirmDisplayAction() {
+  if (!confirmation.value) return
+  await store.displayAction(confirmation.value)
+  if (!store.error) { confirmation.value = null; settingsOpen.value = false }
+}
 const showReveal = computed(() => store.phase === 'reveal' && store.game?.lastReveal && dismissedRound.value !== store.round)
 watch(() => store.phase, phase => { if (phase !== 'reveal') dismissedRound.value = 0 })
 const playerName = (id: string) => store.players.find(p => p.id === id)?.name ?? 'Игрок'
 </script>
 <template>
   <main class="host-screen" :class="{ 'host-screen--lobby': store.phase === 'lobby', 'host-screen--finished': store.phase === 'finished' }">
+    <section v-if="store.hub?.isDisplayOwner" class="card stack">
+      <button v-if="!settingsOpen" class="btn" @click="settingsOpen = true">Настройки доски</button>
+      <template v-else>
+        <h2>Настройки доски</h2>
+        <template v-if="!confirmation">
+          <button class="btn" :disabled="store.busy" @click="confirmation = 'rotate-display-code'">Обновить код доски</button>
+          <button class="btn btn--danger" :disabled="store.busy" @click="confirmation = 'reset-display'">Сбросить доску и участников</button>
+          <button class="btn" @click="settingsOpen = false">Закрыть</button>
+        </template>
+        <div v-else role="alertdialog" aria-label="Подтверждение настроек доски" class="stack">
+          <p v-if="confirmation === 'reset-display'">Сбросить доску? Текущая партия завершится без результата, все участники будут отключены. Появится новый код.</p>
+          <p v-else>Обновить код доски? Прежний код больше не подойдёт для подключения. Участники и партия сохранятся.</p>
+          <button class="btn" @click="confirmation = null">Отмена</button>
+          <button class="btn btn--danger" :disabled="store.busy" @click="confirmDisplayAction">Подтвердить</button>
+        </div>
+      </template>
+    </section>
     <div v-if="store.phase === 'lobby'" class="room-card"><div><p class="eyebrow">Доска результатов · код комнаты</p><strong>{{ store.roomCode }}</strong></div><p>Введите этот код на телефоне и выберите имя. Первый игрок станет лидером.</p></div>
     <div v-if="store.phase === 'lobby'" class="board-lobby-join"><RoomQr :code="store.roomCode ?? ''" /><RoomLobby board /></div>
     <template v-else><MarketBoard /><GameOver v-if="store.phase === 'finished'" />

@@ -97,6 +97,7 @@ function pointerCancel(event: PointerEvent) { if (gesture?.id === event.pointerI
       </article>
     </div>
     <div v-if="mobile && (armedCard || drag)" ref="exchangeZone" class="table-slot exchange-slot" :class="{ 'is-drop-target': dropTarget === 'exchange', 'is-drop-available': armedCard && canExchange, 'is-unavailable': !canExchange }"><div class="table-slot__heading"><p class="eyebrow">Обмен карты</p><button class="btn zone-exchange" :disabled="!armedCard || !canExchange" @click="useCard('exchange')">Обменять карту</button></div><p class="muted">{{ dropTarget === 'exchange' ? 'Отпустите, чтобы обменять' : exchangeHint }}</p></div>
+    <button class="btn btn--block" :disabled="store.busy" @click="store.action('back-to-trading')">Вернуться к торговле</button>
     <button class="btn btn--primary btn--block finish-turn" :disabled="store.busy || !selected" @click="store.action('finish-turn')">{{ store.busy ? 'Сохраняем…' : 'Закончить ход' }}</button>
 
   </section>

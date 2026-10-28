@@ -10,6 +10,7 @@
 | [APP_MAP.md](APP_MAP.md) | Где искать код, как проходит ход и что сохраняет устройство |
 | [SUPABASE_SETUP.md](SUPABASE_SETUP.md) | Таблицы, права, серверные функции и создание нового backend |
 | [IMPROVEMENTS.md](IMPROVEMENTS.md) | Единый список задач, приоритетов и предложений по интерфейсу |
+| [BOARD_REDESIGN.md](BOARD_REDESIGN.md) | Согласованный проект постоянной доски и перехода на новую модель данных |
 | [ARCHITECTURE_OPTIONS.md](ARCHITECTURE_OPTIONS.md) | Обсуждаемые варианты смены инфраструктуры; не инструкция текущего деплоя |
 
 Основной сайт: [race-to-the-bottom-36n.pages.dev](https://race-to-the-bottom-36n.pages.dev/).

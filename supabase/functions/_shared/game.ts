@@ -8,7 +8,7 @@ export interface Turn { round: number; id: string; trades: TradeOrder[]; cardId:
 export interface Player { id: string; name: string; balance: number; portfolio: Record<CompanyId, number>; stage: 'trading' | 'influence' | 'ready'; tradesUsed: number }
 export interface CompanyState { id: CompanyId; price: number }
 export interface Reveal { round: number; cards: Array<{ playerId: string; card: Card }>; pricesBefore: Record<CompanyId, number>; pricesAfter: Record<CompanyId, number>; deltas: Record<CompanyId, number> }
-export interface GameState { schemaVersion: 3; lobbyMode?: 'first-player'; config: GameConfig; players: Player[]; companies: CompanyState[]; round: number; phase: 'lobby' | 'playing' | 'reveal' | 'finished'; lastReveal: Reveal | null; winnerIds: string[] | null }
+export interface GameState { schemaVersion: 3; matchId: string; lobbyMode?: 'first-player'; config: GameConfig; players: Player[]; companies: CompanyState[]; round: number; phase: 'lobby' | 'playing' | 'reveal' | 'finished'; lastReveal: Reveal | null; winnerIds: string[] | null }
 export interface PrivateState { hand: Card[]; deck: Card[]; discard: Card[]; selectedCardId: string | null; exchanged: boolean; exchangesUsed: number; pending: Turn | null; lastSubmissionId: string | null }
 export type PlayerView = Pick<PrivateState, 'hand' | 'selectedCardId' | 'exchanged' | 'exchangesUsed' | 'pending'>
 export type PrivatePlayers = Record<string, PrivateState>
@@ -24,7 +24,7 @@ export function createPlayer(id: string, name: string): Player {
   return { id, name: cleanName(name), balance: DEFAULT_CONFIG.initialBalance, portfolio: { REDSTONE: 0, BLUEWELL: 0, GOLDSPARK: 0 }, stage: 'trading', tradesUsed: 0 }
 }
 export function createLobby(id: string, name: string): GameState {
-  return { schemaVersion: 3, config: { ...DEFAULT_CONFIG }, players: [createPlayer(id, name)], companies: COMPANY_IDS.map(id => ({ id, price: DEFAULT_CONFIG.initialPrice })), round: 0, phase: 'lobby', lastReveal: null, winnerIds: null }
+  return { schemaVersion: 3, matchId: crypto.randomUUID(), config: { ...DEFAULT_CONFIG }, players: [createPlayer(id, name)], companies: COMPANY_IDS.map(id => ({ id, price: DEFAULT_CONFIG.initialPrice })), round: 0, phase: 'lobby', lastReveal: null, winnerIds: null }
 }
 export function createDisplayLobby(): GameState {
   const state = createLobby('display-placeholder','Доска')
@@ -168,7 +168,7 @@ export function nextRound(state: GameState, privatePlayers: PrivatePlayers): { s
 }
 export function resetGame(state: GameState): GameState {
   const next = createLobby(state.players[0].id, state.players[0].name)
-  next.players = state.players.map(p => createPlayer(p.id, p.name)); return next
+  next.players = state.players.map(p => createPlayer(p.id, p.name)); next.lobbyMode = state.lobbyMode; return next
 }
 export function playerView(privateState?: PrivateState): PlayerView | null {
   return privateState ? { hand: privateState.hand, selectedCardId: privateState.selectedCardId, exchanged: privateState.exchanged, exchangesUsed: privateState.exchangesUsed, pending: privateState.pending } : null

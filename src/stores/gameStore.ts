@@ -14,6 +14,12 @@ const ROLE_KEY = 'race-to-the-bottom:v3:role'
 interface Hub { mode?: 'key' | 'display'; isDisplayOwner?: boolean; id: string; code: string; isManager: boolean; sessionId: string | null; roomCode?: string; key?: string }
 interface Draft extends Turn { stage: 'trading' | 'influence' }
 const HUB_KEY = 'race-to-the-bottom:v3:hub'
+const DISPLAY_SECRET_KEY = 'race-to-the-bottom:display-secret'
+function displaySecret() {
+  let secret = localStorage.getItem(DISPLAY_SECRET_KEY)
+  if (!secret) { secret = crypto.randomUUID() + crypto.randomUUID(); localStorage.setItem(DISPLAY_SECRET_KEY, secret) }
+  return secret
+}
 export const useGameStore = defineStore('game', () => {
   let savedHub: Hub | null = null
   try { savedHub = JSON.parse(localStorage.getItem(HUB_KEY) || 'null') } catch { localStorage.removeItem(HUB_KEY) }
@@ -29,19 +35,21 @@ export const useGameStore = defineStore('game', () => {
   const error = ref<string | null>(null)
   const busy = ref(false)
   const restoring = ref(true)
+  const restoreFailed = ref(false)
   const connection = ref('Подключение…')
   let channel: RealtimeChannel | null = null
   let refreshTimer: ReturnType<typeof setTimeout> | null = null
   let privateVersion = 0
   let generation = 0
   let switchingLobby = false
+  let loadedDraftKey: string | null = null
   const game = computed(() => session.value?.state ?? null)
   const players = computed(() => game.value?.players ?? [])
   const companies = computed(() => game.value?.companies ?? [])
   const marketHistory = ref<MarketHistory | null>(null)
   let marketRoom: string | null = null
   watch(game, state => {
-    const room = session.value?.id ?? null
+    const room = session.value && state ? `${session.value.id}:${state.matchId}` : null
     if (!state || !room) { marketRoom = null; marketHistory.value = null; return }
     if (room !== marketRoom) {
       marketRoom = room
@@ -83,6 +91,7 @@ export const useGameStore = defineStore('game', () => {
     if (refreshTimer) clearTimeout(refreshTimer)
     refreshTimer = null
     draft.value = null
+    loadedDraftKey = null
     session.value = null; ownCards.value = null; playerId.value = null; isMain.value = false; privateVersion = 0
     localStorage.removeItem(SESSION_KEY); if (!hub.value) sessionStorage.removeItem(ROLE_KEY)
   }
@@ -100,10 +109,11 @@ export const useGameStore = defineStore('game', () => {
     ensureDraft()
 
   }
-  function draftKey() { return `race-to-the-bottom:v3:draft:${session.value?.id}:${playerId.value}:${game.value?.round}` }
+  function draftKey() { return `race-to-the-bottom:v3:draft:${session.value?.id}:${game.value?.matchId}:${playerId.value}:${game.value?.round}` }
   function ensureDraft() {
     if (!game.value || !playerId.value || game.value.phase !== 'playing') { draft.value = null; return }
-    if (draft.value?.round === game.value.round) return
+    if (draft.value?.round === game.value.round && loadedDraftKey === draftKey()) return
+    loadedDraftKey = draftKey()
     try { draft.value = JSON.parse(localStorage.getItem(draftKey()) || 'null') } catch { draft.value = null }
     if (!draft.value || draft.value.round !== game.value.round) draft.value = { round:game.value.round,id:crypto.randomUUID(),trades:[],cardId:ownCards.value?.selectedCardId ?? '',stage:ownCards.value?.selectedCardId ? 'influence' : 'trading' }
   }
@@ -174,6 +184,7 @@ export const useGameStore = defineStore('game', () => {
   async function action(actionName: string, details: Record<string, unknown> = {}) {
     if (busy.value || !session.value) return
     if (actionName === 'end-trading' && draft.value && me.value?.stage === 'trading') { draft.value.stage = 'influence'; saveDraft(); return }
+    if (actionName === 'back-to-trading' && draft.value && me.value?.stage === 'influence') { draft.value.stage = 'trading'; saveDraft(); return }
     if (actionName === 'unselect-card') {
       // Cancellation only changes this turn's local choice; never send it to the server.
       if (game.value?.phase !== 'playing' || !playerId.value || game.value.players.find(p => p.id === playerId.value)?.stage === 'ready') return
@@ -190,11 +201,12 @@ export const useGameStore = defineStore('game', () => {
     switchingLobby = actionName === 'new-lobby'
     busy.value = true; error.value = null
     const id = session.value.id; const token = generation
-    try { const result = await call('game-action', { sessionId: id, action: actionName, ...details }); if (token === generation) { if (switchingLobby) { leave(); apply(result); setRole('main'); subscribe() } else apply(result) } }
+    try { const result = await call('game-action', { sessionId: id, matchId:game.value?.matchId, action: actionName, ...details }); if (token === generation) { if (switchingLobby) { leave(); apply(result); setRole('main'); subscribe() } else apply(result) } }
     catch (caught) { error.value = caught instanceof Error ? caught.message : 'Ошибка хода'; await sync() }
     finally { switchingLobby = false; busy.value = false }
   }
   async function restore() {
+    restoring.value = true; restoreFailed.value = false; error.value = null
     try {
       const id = localStorage.getItem(SESSION_KEY)
       const desiredRole = sessionStorage.getItem(ROLE_KEY)
@@ -212,7 +224,7 @@ export const useGameStore = defineStore('game', () => {
       const savedRole = sessionStorage.getItem(ROLE_KEY)
       setRole(savedRole === 'manage' && result.isHost ? 'manage' : savedRole === 'board' || !result.playerId ? 'board' : result.isHost ? 'main' : 'player')
       if (session.value) subscribe()
-    } catch { leave(); error.value = 'Предыдущая комната недоступна. Войдите в комнату заново' }
+    } catch { restoreFailed.value = true; error.value = 'Не удалось восстановить комнату. Проверьте связь и повторите попытку'; connection.value = 'Связь прервана. Повторите подключение' }
     finally { restoring.value = false }
   }
   const canBuy = (id: string, company: CompanyId) => !busy.value && !!localGame.value && mayBuy(localGame.value, id, company)
@@ -220,7 +232,7 @@ export const useGameStore = defineStore('game', () => {
   function saveHub() { localStorage.setItem(HUB_KEY, JSON.stringify(hub.value)) }
   async function syncHub() {
     if (!hub.value) return
-    const result = await call('create-room',hub.value.mode === 'display' && hub.value.isDisplayOwner ? {action:'open-display'} : {action:'hub-sync',hubId:hub.value.id,key:hub.value.key})
+    const result = await call('create-room',hub.value.mode === 'display' && hub.value.isDisplayOwner ? {action:'open-display',hubId:hub.value.id,displaySecret:displaySecret()} : {action:'hub-sync',hubId:hub.value.id,key:hub.value.key})
     hub.value = { ...hub.value, ...result.hub }; saveHub(); if (!session.value) connection.value = 'На связи'
     if (!hub.value) return
     if (session.value && hub.value.sessionId !== session.value.id) leave()
@@ -244,7 +256,7 @@ export const useGameStore = defineStore('game', () => {
     busy.value = true; error.value = null
     try {
       await identity()
-      const result = await call('create-room',{action:'open-display'})
+      const result = await call('create-room',{action:'open-display',hubId:hub.value?.mode === 'display' ? hub.value.id : undefined,displaySecret:displaySecret()})
       if (hubTimer) clearTimeout(hubTimer)
       leave(); hub.value = result.hub; saveHub(); setRole('board')
       if (result.session) { apply(result); subscribe() } else await syncHub()
@@ -263,7 +275,18 @@ export const useGameStore = defineStore('game', () => {
     } catch(e) { error.value = e instanceof Error ? e.message : 'Ошибка хаба' }
     finally { busy.value = false }
   }
+  async function displayAction(actionName: 'rotate-display-code' | 'reset-display') {
+    if (busy.value || !hub.value?.isDisplayOwner) return
+    busy.value = true; error.value = null
+    try {
+      await identity()
+      const result = await call('create-room',{action:actionName,hubId:hub.value.id,displaySecret:displaySecret()})
+      if (session.value?.id !== result.session.id) leave()
+      hub.value = result.hub; saveHub(); apply(result); setRole('board'); subscribe(); watchHub()
+    } catch (e) { error.value = e instanceof Error ? e.message : 'Не удалось изменить доску' }
+    finally { busy.value = false }
+  }
   function exitHub() { if (hubTimer) clearTimeout(hubTimer); hubTimer = null; hub.value = null; localStorage.removeItem(HUB_KEY); leave() }
-  return { openDisplay, hub, hasHub, marketHistory, draft, selectedCardId, hubAction, exitHub, undoTrade, game, players, companies, me, phase, round, totalRounds, roomCode, minPrice, maxPrice, winnerIds, ranking, hasRoom, ownCards, isMain, role, error, busy, restoring, connection, connect, action, restore, leave, setRole, canBuy, canSell,
+  return { openDisplay, hub, hasHub, marketHistory, draft, selectedCardId, hubAction, displayAction, exitHub, undoTrade, game, players, companies, me, phase, round, totalRounds, roomCode, minPrice, maxPrice, winnerIds, ranking, hasRoom, ownCards, isMain, role, error, busy, restoring, restoreFailed, connection, connect, action, restore, leave, setRole, canBuy, canSell,
     buyShare: (companyId: CompanyId) => localTrade(companyId,'buy'), sellShare: (companyId: CompanyId) => localTrade(companyId,'sell') }
 })

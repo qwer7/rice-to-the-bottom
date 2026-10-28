@@ -5,28 +5,21 @@ Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
     const { admin, user } = await context(request)
-    const { sessionId, action, cardId, selectedCardId, turn, targetPlayerId, round } = await request.json()
+    const { sessionId, action, cardId, selectedCardId, turn, targetPlayerId, round, matchId } = await request.json()
     if (typeof sessionId !== 'string') throw new Error('Не указана комната')
     if (action === 'sync') return response(await snapshot(admin, sessionId, user.id))
     for (let attempt = 0; attempt < 8; attempt++) {
       const { data: session, error: sessionError } = await admin.from('game_sessions').select().eq('id', sessionId).single()
       if (sessionError || !session || session.status !== 'active') throw new Error('Комната закрыта или недоступна')
       if (session.state.schemaVersion !== 3) throw new Error('Это комната старой версии. Создайте новую')
+      if (matchId !== session.state.matchId) throw new Error('Партия изменилась. Обновите экран')
       const { data: seat, error: seatError } = await admin.from('game_seats').select('player_id').eq('session_id', sessionId).eq('user_id', user.id).maybeSingle()
       if (seatError) throw new Error('Не удалось проверить игрока')
       const isHost = session.host_user_id === user.id
       const playerId = seat?.player_id
       if (!isHost && !playerId) throw new Error('Доска не может управлять партией')
       if (action === 'new-lobby') {
-        if (!isHost || !playerId || session.state.lobbyMode !== 'first-player') throw new Error('Новое лобби может создать только лидер этой комнаты')
-        const oldPlayer = session.state.players.find((p: {id:string}) => p.id === playerId)
-        if (!oldPlayer) throw new Error('Игрок не найден')
-        const nextPlayer = crypto.randomUUID()
-        const nextState = createLobby(nextPlayer,oldPlayer.name); nextState.lobbyMode = 'first-player'
-        const nextCode = Array.from(crypto.getRandomValues(new Uint8Array(6)), n => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n % 32]).join('')
-        const {data: nextId,error: nextError} = await admin.rpc('restart_display_lobby',{p_session:sessionId,p_actor:user.id,p_code:nextCode,p_player:nextPlayer,p_state:nextState,p_private:createPrivateState()})
-        if (nextError || !nextId) throw new Error('Не удалось создать новое лобби. Обновите комнату')
-        return response(await snapshot(admin,nextId,user.id))
+        throw new Error('Используйте новую партию или сброс доски на телевизоре')
       }
       let state = session.state as GameState
       const { data: privateRows, error: privateError } = await admin.from('game_player_private').select('player_id,payload').eq('session_id', sessionId)

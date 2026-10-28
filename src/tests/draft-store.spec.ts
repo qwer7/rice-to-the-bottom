@@ -8,6 +8,42 @@ const memory=new Map<string,string>()
 beforeEach(()=>{vi.useFakeTimers();setActivePinia(createPinia());memory.clear();vi.stubGlobal('localStorage',{getItem:(k:string)=>memory.get(k)??null,setItem:(k:string,v:string)=>memory.set(k,v),removeItem:(k:string)=>memory.delete(k)}); vi.stubGlobal('sessionStorage',{getItem:()=>null,setItem:()=>{},removeItem:()=>{}}); mocked.invoke.mockReset()})
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals()})
 describe('Local draft and one turn submission',()=>{
+ it('keeps the selected card and exchange when returning to trading',async()=>{
+  const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
+  const snapshot={session:{id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state},playerId:'b',isHost:false,private:own}
+  mocked.invoke.mockResolvedValue({data:snapshot,error:null})
+  const store=useGameStore(); await store.connect('player','ABC234','Б')
+  await store.action('end-trading'); await store.action('select-card',{cardId:own.hand[0].id})
+  mocked.invoke.mockResolvedValue({data:{...snapshot,session:{...snapshot.session,version:2},private:{...own,exchanged:true,exchangesUsed:1}},error:null})
+  await store.action('exchange-card',{cardId:own.hand[1].id})
+  await store.action('back-to-trading'); store.buyShare('REDSTONE')
+  expect(store.me?.portfolio.REDSTONE).toBe(1); expect(store.selectedCardId).toBe(own.hand[0].id)
+  expect(store.ownCards?.exchangesUsed).toBe(1)
+  await store.action('end-trading'); expect(store.selectedCardId).toBe(own.hand[0].id)
+  store.leave()
+ })
+ it('preserves the stored session after a failed restore and retries it',async()=>{
+  memory.set('race-to-the-bottom:v3:session','room')
+  mocked.invoke.mockResolvedValueOnce({data:null,error:new Error('offline')})
+  const store=useGameStore(); await store.restore()
+  expect(memory.get('race-to-the-bottom:v3:session')).toBe('room'); expect(store.restoreFailed).toBe(true)
+  const state=startGame(addPlayer(createLobby('a','А'),'b','Б'))
+  mocked.invoke.mockResolvedValue({data:{session:{id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state},playerId:'b',isHost:false,private:playerView(createPrivateState())},error:null})
+  await store.restore(); expect(store.me?.name).toBe('Б'); expect(store.restoreFailed).toBe(false)
+  store.leave()
+ })
+ it('does not reuse a draft after a new match in the same room',async()=>{
+  const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
+  const session={id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state}
+  mocked.invoke.mockResolvedValue({data:{session,playerId:'b',isHost:false,private:own},error:null})
+  const store=useGameStore(); await store.connect('player','ABC234','Б')
+  store.buyShare('REDSTONE'); expect(store.me?.portfolio.REDSTONE).toBe(1)
+  const next={...state,matchId:crypto.randomUUID()}
+  mocked.invoke.mockResolvedValue({data:{session:{...session,version:2,state:next},playerId:'b',isHost:false,private:own},error:null})
+  mocked.onUpdate!({new:{...session,version:2,state:next}})
+  await vi.waitFor(()=>expect(store.me?.portfolio.REDSTONE).toBe(0))
+  store.leave()
+ })
  it('opens the TV board from one combined response without joining it again',async()=>{
   const state={...createLobby('x','Доска'),players:[],lobbyMode:'first-player' as const}
   const hub={id:'hub',code:'HUB234',mode:'display',isDisplayOwner:true,isManager:false,sessionId:'room',roomCode:'ABC234'}

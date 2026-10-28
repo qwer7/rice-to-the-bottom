@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useDisplayMode } from '@/composables/useDisplayMode'
 import { onMounted } from 'vue'
-import { roomFromSearch } from '@/lib/joinLink'
 import ManagementScreen from '@/components/ManagementScreen.vue'
 import HubScreen from '@/components/HubScreen.vue'
 import LobbyScreen from '@/components/LobbyScreen.vue'
@@ -12,10 +11,9 @@ const store = useGameStore()
 const { phone, tv:tvMode } = useDisplayMode()
 onMounted(async () => {
   if (tvMode) { await store.openDisplay(); store.restoring = false; return }
-  if (roomFromSearch(location.search)) { if (store.hasHub || store.hasRoom) store.exitHub(); store.setRole('player'); store.restoring = false; return }
   await store.restore()
   if (phone.value) {
-    if (!store.me && (store.hasRoom || store.hasHub)) store.exitHub()
+    if (!store.restoreFailed && !store.me && (store.hasRoom || store.hasHub)) store.exitHub()
     store.setRole(store.isMain ? 'main' : 'player')
   }
 })
@@ -36,6 +34,7 @@ onMounted(async () => {
     <p v-if="store.restoring" class="muted" role="status">Подключаемся…</p>
     <template v-else>
       <p v-if="store.error" class="error error-banner" role="alert">{{ store.error }}</p>
+      <button v-if="store.restoreFailed && !tvMode" class="btn" @click="store.restore()">Повторить восстановление</button>
       <section v-if="tvMode && !store.hasRoom" class="card stack"><h1>Открываем лобби</h1><p class="muted">Доска подключается к серверу. Код комнаты появится здесь автоматически.</p><button class="btn btn--primary" :disabled="store.busy" @click="store.openDisplay()">{{ store.busy ? 'Подключаемся…' : 'Повторить подключение' }}</button></section>
       <ManagementScreen v-else-if="store.role === 'manage' && (store.isMain || store.hub?.isManager)" />
       <HubScreen v-else-if="store.hasHub && !store.hasRoom" />
