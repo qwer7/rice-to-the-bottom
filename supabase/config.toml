@@ -1,0 +1,12 @@
+project_id = "race-to-the-bottom"
+
+# Each handler validates the user token with auth.getUser() before any DB access.
+# Disable the legacy gateway check to support current JWT signing keys.
+[functions.create-room]
+verify_jwt = false
+
+[functions.join-room]
+verify_jwt = false
+
+[functions.game-action]
+verify_jwt = false
