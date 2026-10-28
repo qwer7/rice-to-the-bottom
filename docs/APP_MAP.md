@@ -1,6 +1,6 @@
 # Карта приложения
 
-Актуально по исходникам на 28 октября 2026. Быстрый вход в контекст; предложения — в [IMPROVEMENTS.md](IMPROVEMENTS.md). Работа развёрнутого сервера и интерфейс на физических устройствах при составлении карты не проверялись.
+Актуально по исходникам на 28 октября 2026. Быстрый вход в контекст; предложения — в [IMPROVEMENTS.md](IMPROVEMENTS.md). Текущий выпуск и границы его проверки описаны в [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Продукт и основной сценарий
 
@@ -26,7 +26,7 @@ flowchart LR
   S --> E
 ```
 
-Cloudflare Pages раздаёт веб-сборку. Android — WebView того же сайта, отдельного игрового сервера в APK нет. По DEPLOYMENT.md публикация сайта сейчас ручная, Direct Upload.
+Cloudflare Pages раздаёт веб-сборку. Android — WebView того же сайта, отдельного игрового сервера в APK нет. Проверки и публикация Supabase → Cloudflare выполняются GitHub Actions; порядок — в [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Где что искать
 
@@ -50,11 +50,8 @@ Cloudflare Pages раздаёт веб-сборку. Android — WebView тог�
 
 ## Модель данных и состояния
 
-- `game_hubs`: постоянная привязка доски/хаба к активной комнате. Есть текущий режим `display` и совместимый режим по ключу.
-- `game_sessions`: код, лидер (`host_user_id`), публичное состояние, версия, статус `active/closed`.
-- `game_seats`: связь Supabase-пользователя с игроком комнаты. Имя не является удостоверением личности.
-- `game_viewers`: доступ наблюдателей к комнате.
-- `game_player_private`: рука, колода, сброс, выбранная карта, отложенный ход. Клиент получает только свою разрешённую часть.
+Таблицы, RPC и права доступа описаны в [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+
 - Фазы партии: `lobby → playing → reveal → playing … → finished`.
 - Локальные стадии игрока: `trading → influence → ready`. Переход к влиянию локальный; после отправки сервер отмечает готовность.
 - Роли интерфейса `player/main/board/manage` не заменяют серверную проверку прав.
@@ -93,5 +90,5 @@ Cloudflare Pages раздаёт веб-сборку. Android — WebView тог�
 - [GAME_RULES.md](GAME_RULES.md) — правила.
 - [DEPLOYMENT.md](DEPLOYMENT.md) — текущая процедура публикации и эксплуатации.
 - [SUPABASE_SETUP.md](SUPABASE_SETUP.md) — схема и настройка backend.
-- [android-tv/README.md](android-tv/README.md) — устройство и сборка оболочки.
-- [todo.md](todo.md) — исходные пожелания.
+- [ANDROID_TV.md](ANDROID_TV.md) — устройство и сборка оболочки.
+- [IMPROVEMENTS.md](IMPROVEMENTS.md) — единый список пожеланий и приоритетов.

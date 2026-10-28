@@ -83,7 +83,7 @@ jobs:
             fi
           done
           if [[ "$MIGRATION_BASELINE_VERIFIED" != 'true' ]]; then
-            echo '::error::Reconcile existing Supabase migration history first. See CI_CD_SETUP.md.'
+            echo '::error::Reconcile existing Supabase migration history first. See docs/DEPLOYMENT.md.'
             exit 1
           fi
           if [[ "$VITE_SUPABASE_URL" != "https://${SUPABASE_PROJECT_ID}.supabase.co" ]]; then
