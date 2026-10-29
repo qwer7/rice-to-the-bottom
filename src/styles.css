@@ -1123,3 +1123,23 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .tv-share.is-owned { background: color-mix(in srgb, var(--share-color) 65%, #8c9298); }
 .tv-card-legend { display: flex; justify-content: center; align-items: center; gap: clamp(10px, 2vw, 30px); white-space: nowrap; color: var(--muted); font-size: clamp(10px, 1.1vw, 15px); }
 .tv-card-legend strong { color: var(--accent); font-size: 1.25em; margin-right: 3px; }
+
+/* TV lobby: keep the QR and room code together. */
+.app--tv .host-screen--lobby { display: block; min-height: 0; }
+.tv-lobby { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; align-items: center; column-gap: 3vw; row-gap: 12px; min-height: calc(100dvh - 80px); }
+.tv-lobby__join { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.tv-lobby__title { grid-column: 1 / -1; text-align: center; align-self: start; color: var(--accent); font-family: inherit; font-size: clamp(16px, 2vw, 28px); font-weight: 800; letter-spacing: .13em; line-height: 1.1; text-transform: uppercase; }
+.app--tv .tv-lobby .room-qr img { width: clamp(210px, 47vh, 400px); height: auto; border-radius: 12px; }
+.tv-lobby__code { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(27px, 4vw, 48px); letter-spacing: .12em; line-height: 1; }
+.reveal-round { color: var(--text); }
+
+.reveal-purchase { display: flex; align-items: center; gap: 7px; margin-top: 10px; color: var(--text); font-size: 12px; }
+.reveal-purchase .tv-card-slot { flex: none; }
+.reveal-divider { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
+.reveal-prices .company-card { aspect-ratio: auto; min-height: 145px; }
+.reveal-backdrop--tv .reveal-prices .company-card { height: clamp(107px, 24vh, 248px); min-height: 0; padding: 14px 34px 14px 14px; gap: 4px; border-radius: 12px; }
+.reveal-backdrop--tv .reveal-prices .company-card__name { font-size: clamp(14px, 1.65vw, 24px); }
+.reveal-backdrop--tv .reveal-prices .company-card__industry { font-size: clamp(10px, 1.1vw, 16px); }
+.reveal-backdrop--tv .reveal-prices .company-card__price { font-size: clamp(64px, 13vh, 150px); transform: translateY(-10px); }
+.reveal-backdrop--tv .reveal-prices .company-card__change-label { font-size: 10px; }
+.reveal-backdrop--tv .reveal-prices .company-thermometer { right: 11px; top: 12px; bottom: 12px; }

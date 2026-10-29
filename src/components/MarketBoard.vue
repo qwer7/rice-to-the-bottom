@@ -5,9 +5,9 @@ import { COMPANY_IDS, companyMeta } from '@/game/constants'
 import { useGameStore } from '@/stores/gameStore'
 import { totalCapital } from '@/game/scoring'
 import { useDisplayMode } from '@/composables/useDisplayMode'
+import { influenceIcons } from '@/game/influenceIcons'
 const store = useGameStore()
 const { tv } = useDisplayMode()
-const influenceIcons: Record<InfluenceType, string> = { dividends: '◈', broker: '↔', analyst: '⌕', tax: '%', theft: '↯', lucky: '★' }
 const slotIcon = (cards: InfluenceType[] | undefined, slot: number) => { const card = cards?.[slot - 1]; return card ? influenceIcons[card] : '' }
 const stageLabel = (stage: string) => stage === 'ready' ? 'Готов' : 'Делает ход'
 </script>

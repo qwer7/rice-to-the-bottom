@@ -8,6 +8,7 @@ const props = defineProps<{
   delta: number | null
   deltaRound?: number | null
   initial?: boolean
+  previousPrice?: number
   min: number
   max: number
 }>()
@@ -45,7 +46,7 @@ const deltaView = computed(() => {
     </div>
     <div class="company-card__bottom">
       <div class="company-card__change">
-        <span class="company-card__change-label">{{ deltaRound ? `За раунд ${deltaRound}` : 'Изменение за раунд' }}</span>
+        <span class="company-card__change-label">{{ previousPrice !== undefined ? `${previousPrice}$ → ${company.price}$` : deltaRound ? `За раунд ${deltaRound}` : 'Изменение за раунд' }}</span>
         <span class="delta" :class="deltaView.className">{{ deltaView.text }}</span>
       </div>
       <div class="company-card__price">{{ company.price }}<span class="money-unit" aria-hidden="true">$</span></div>
