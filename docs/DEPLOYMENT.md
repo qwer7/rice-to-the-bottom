@@ -12,7 +12,7 @@
 
 ## Выпуск
 
-GitHub Actions в [release.yml](../.github/workflows/release.yml) проверяет сборку и миграции на временной базе. На `main`, если `DEPLOY_ENABLED=true`, он применяет новые миграции и выпускает Edge Functions в Supabase. GitHub хранит `SUPABASE_ACCESS_TOKEN` и `SUPABASE_DB_PASSWORD` как secrets, а `SUPABASE_PROJECT_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `MIGRATION_BASELINE_VERIFIED` и `DEPLOY_ENABLED` как repository variables.
+GitHub Actions в [release.yml](../.github/workflows/release.yml) проверяет сборку и миграции на временной базе. На `main` он применяет новые миграции и выпускает Edge Functions в Supabase; если `DEPLOY_ENABLED` не равен `true`, выпуск завершается ошибкой и не должен разрешить публикацию сайта. GitHub хранит `SUPABASE_ACCESS_TOKEN` и `SUPABASE_DB_PASSWORD` как secrets, а `SUPABASE_PROJECT_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `MIGRATION_BASELINE_VERIFIED` и `DEPLOY_ENABLED` как repository variables.
 
 Vercel подключён к репозиторию `qwer7/rice-to-the-bottom`; в production настроены публичные `VITE_SUPABASE_URL` и `VITE_SUPABASE_PUBLISHABLE_KEY`, тип проекта — Vite. Автоматическая сборка временно отключена на время настройки: до её включения нужно настроить Deployment Check для успешного job `Publish Supabase`, а также убедиться, что выпуск клиента не происходит при ошибке backend. Требуется проверка реального выпуска после включения.
 
