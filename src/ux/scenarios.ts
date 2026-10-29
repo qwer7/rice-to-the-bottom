@@ -9,6 +9,6 @@ export const playerScenarios = [
 ] as const
 export const boardScenarios = [
   ['empty-lobby', 'Лобби · ожидание игроков'], ['lobby', 'Лобби · четыре игрока'],
-  ['playing', 'Доска · начало игры'], ['playing-progress', 'Доска · игроки делают ходы'],
+  ['playing', 'Доска · начало игры'], ['playing-progress', 'Доска · игроки делают ходы'], ['connecting', 'Доска · подключение'], ['offline', 'Доска · нет связи'],
   ['reveal', 'Раскрытие карт'], ['finished', 'Победитель и раскрытие'], ['tie', 'Ничья и раскрытие'],
 ] as const

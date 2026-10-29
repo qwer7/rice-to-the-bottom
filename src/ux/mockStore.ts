@@ -21,6 +21,16 @@ export const usePreviewStore = defineStore('game', () => {
     initial.companies[0].price = 6; initial.companies[1].price = 3; initial.companies[2].price = 7
     initial.players.forEach((p, i) => { p.balance = 35 + i * 5; p.portfolio = { REDSTONE: i + 1, BLUEWELL: 3 - i, GOLDSPARK: i }; p.influenceCards = i === 0 ? ['analyst'] : i === 1 ? ['broker', 'lucky'] : [] })
   }
+  if (board && initial.phase !== 'lobby') {
+    initial.players[0].influenceCards = ['dividends', 'analyst']
+    initial.players[1].influenceCards = ['broker']
+    initial.players[2].influenceCards = []
+    initial.players[3].influenceCards = ['lucky']
+    initial.players[0].portfolio = { REDSTONE: 3, BLUEWELL: 1, GOLDSPARK: 2 }
+    initial.players[1].portfolio = { REDSTONE: 0, BLUEWELL: 0, GOLDSPARK: 0 }
+    initial.players[2].portfolio = { REDSTONE: 1, BLUEWELL: 4, GOLDSPARK: 2 }
+    initial.players[3].portfolio = { REDSTONE: 2, BLUEWELL: 2, GOLDSPARK: 4 }
+  }
   if (scenario === 'playing-progress') initial.players.slice(0, 2).forEach(p => { p.stage = 'ready' })
   if (scenario === 'ready') initial.players[index].stage = 'ready'
   if (['reveal', 'finished', 'tie', 'manage-finished'].includes(scenario)) {
@@ -64,5 +74,5 @@ export const usePreviewStore = defineStore('game', () => {
   }
   const tradeHistory: typeof initial[] = []
   function changeTrade(id: CompanyId, kind: 'buy' | 'sell') { try { const next = trade(toRaw(game.value), playerId, id, kind); tradeHistory.push(game.value); game.value = next } catch { /* disabled controls cover invalid trades */ } }
-  return { game, players: computed(() => game.value.players), companies: computed(() => game.value.companies), me, phase: computed(() => game.value.phase), round: computed(() => game.value.round), totalRounds: computed(() => game.value.config.totalRounds), minPrice: computed(() => game.value.config.minPrice), maxPrice: computed(() => game.value.config.maxPrice), roomCode: 'ABC234', winnerIds: computed(() => game.value.winnerIds), ranking: computed(() => game.value.players.map(player => ({ player, capital: totalCapital(player, game.value.companies) })).sort((a,b) => b.capital-a.capital)), hasRoom, hasHub: false, hub, isMain, role, busy, error, restoring: false, restoreFailed: false, connection: 'На связи', ownCards, draft, selectedCardId, availableForPurchase: computed(() => me.value?.balance ?? 0), marketHistory, action, setRole: (value: string) => { role.value = value }, exitHub: () => { hasRoom.value = false }, restore: async () => {}, openDisplay: async () => {}, connect: async () => {}, displayAction: async () => {}, hubAction: async () => {}, canBuy: (id: string, company: CompanyId) => canBuy(game.value,id,company), canSell: (id: string, company: CompanyId) => canSell(game.value,id,company), buyShare: (id: CompanyId) => changeTrade(id,'buy'), sellShare: (id: CompanyId) => changeTrade(id,'sell'), undoTrade: () => { const previous = tradeHistory.pop(); if (previous) game.value = previous } }
+  return { game, players: computed(() => game.value.players), companies: computed(() => game.value.companies), me, phase: computed(() => game.value.phase), round: computed(() => game.value.round), totalRounds: computed(() => game.value.config.totalRounds), minPrice: computed(() => game.value.config.minPrice), maxPrice: computed(() => game.value.config.maxPrice), roomCode: 'ABC234', winnerIds: computed(() => game.value.winnerIds), ranking: computed(() => game.value.players.map(player => ({ player, capital: totalCapital(player, game.value.companies) })).sort((a,b) => b.capital-a.capital)), hasRoom, hasHub: false, hub, isMain, role, busy, error, restoring: false, restoreFailed: false, connection: scenario === 'connecting' ? 'Подключение…' : scenario === 'offline' ? 'Связь прервана. Повторяем…' : 'На связи', ownCards, draft, selectedCardId, availableForPurchase: computed(() => me.value?.balance ?? 0), marketHistory, action, setRole: (value: string) => { role.value = value }, exitHub: () => { hasRoom.value = false }, restore: async () => {}, openDisplay: async () => {}, connect: async () => {}, displayAction: async () => {}, hubAction: async () => {}, canBuy: (id: string, company: CompanyId) => canBuy(game.value,id,company), canSell: (id: string, company: CompanyId) => canSell(game.value,id,company), buyShare: (id: CompanyId) => changeTrade(id,'buy'), sellShare: (id: CompanyId) => changeTrade(id,'sell'), undoTrade: () => { const previous = tradeHistory.pop(); if (previous) game.value = previous } }
 })

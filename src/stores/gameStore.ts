@@ -171,7 +171,7 @@ export const useGameStore = defineStore('game', () => {
         if (incoming.status === 'closed') { leave(); error.value = hub.value ? null : 'Главный игрок закрыл комнату'; return }
         if (incoming.version > session.value.version) session.value = incoming
         void sync()
-      }).subscribe(status => { connection.value = status === 'SUBSCRIBED' ? 'На связи' : 'Подключение…'; if (status === 'SUBSCRIBED') void sync() })
+      }).subscribe(status => { connection.value = status === 'SUBSCRIBED' ? 'На связи' : status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED' ? 'Связь прервана. Повторяем…' : 'Подключение…'; if (status === 'SUBSCRIBED') void sync() })
     function refresh() { refreshTimer = setTimeout(async () => { await sync(); if (session.value?.id === sessionId) refresh() }, 10000) }
     if (refreshTimer) clearTimeout(refreshTimer)
     refresh()

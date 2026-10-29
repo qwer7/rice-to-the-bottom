@@ -6,6 +6,7 @@ import HubScreen from '@/components/HubScreen.vue'
 import LobbyScreen from '@/components/LobbyScreen.vue'
 import HostScreen from '@/components/HostScreen.vue'
 import ClientScreen from '@/components/ClientScreen.vue'
+import BoardSettings from '@/components/BoardSettings.vue'
 import { useGameStore } from '@/stores/gameStore'
 const store = useGameStore()
 const { phone, tv:tvMode } = useDisplayMode()
@@ -25,7 +26,8 @@ onMounted(async () => {
       <div class="brand"><span class="brand__mark" aria-hidden="true">↓</span><div><p class="brand__name">Race to the Bottom</p><p class="brand__caption">{{ !store.hasRoom ? 'Рынок меняете вы' : store.role === 'board' ? 'Доска результатов' : store.isMain ? 'Главный игрок' : 'Игрок' }}</p></div></div>
       <nav v-if="store.hasRoom || store.hasHub" class="app__tools" aria-label="Экраны игры">
         <span v-if="store.hasRoom && store.phase !== 'lobby'" class="header-room" :aria-label="`Код комнаты: ${store.roomCode}`"><span>Комната</span><strong>{{ store.roomCode }}</strong></span>
-        <span class="connection" :class="{ 'is-online': store.connection === 'На связи' }" :title="store.connection" role="status">{{ store.connection }}</span>
+        <span class="connection" :class="{ 'is-online': store.connection === 'На связи', 'is-offline': store.connection.startsWith('Связь прервана') }" :title="store.connection" :aria-label="store.connection" role="status">{{ store.connection }}</span>
+        <BoardSettings v-if="tvMode && store.hub?.isDisplayOwner && store.role === 'board'" compact />
         <button v-if="!phone && !tvMode && (store.hasRoom || store.hasHub) && store.role !== 'board'" class="btn btn--small nav-button" aria-label="Доска результатов" title="Доска результатов" @click="store.setRole('board')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 19V5m0 14h16M9 16v-5m5 5V7m5 9V3" /></svg><span class="nav-label">Доска результатов</span></button>
         <button v-if="!tvMode && store.hasRoom && store.me && store.role !== 'player' && store.role !== 'main'" class="btn btn--small nav-button" aria-label="Мой экран" title="Мой экран" @click="store.setRole(store.isMain ? 'main' : 'player')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="nav-label">Мой экран</span></button>
         <button v-if="!tvMode && (store.isMain || store.hub?.isManager) && store.role !== 'manage'" class="btn btn--small nav-button" aria-label="Управление" title="Управление" @click="store.setRole('manage')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg><span class="nav-label">Управление</span></button>

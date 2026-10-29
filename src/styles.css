@@ -1022,17 +1022,17 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .header-room { padding: 4px 9px; }
 .app--tv .header-room strong { font-size: clamp(16px, 2vw, 26px); }
 .app--tv .connection { font-size: 12px; }
-.app--tv .host-screen, .app--tv .market-board { gap: 10px; }
+.app--tv .host-screen, .app--tv .market-board { gap: 22px; }
 .app--tv .card { padding: 10px 14px; border-radius: 12px; margin: 0; }
 .app--tv .market-prices { background: transparent; padding: 0; border: 0; }
 .app--tv .board__status { margin-bottom: 8px; gap: 14px; }
 .app--tv .status__round { font-size: clamp(18px, 2vw, 28px); }
 .app--tv .status__phase { font-size: 12px; }
-.app--tv .company-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.app--tv .company-card { aspect-ratio: auto; height: clamp(142px, 32vh, 330px); padding: 14px 34px 14px 14px; border-radius: 12px; gap: 8px; }
+.app--tv .company-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.app--tv .company-card { aspect-ratio: auto; height: clamp(107px, 24vh, 248px); padding: 14px 34px 14px 14px; border-radius: 12px; gap: 4px; }
 .app--tv .company-card__name { font-size: clamp(14px, 1.65vw, 24px); }
 .app--tv .company-card__industry { font-size: clamp(10px, 1.1vw, 16px); }
-.app--tv .company-card__price { font-size: clamp(64px, 13vh, 150px); }
+.app--tv .company-card__price { font-size: clamp(64px, 13vh, 150px); transform: translateY(-10px); }
 .app--tv .company-card__delta { font-size: clamp(20px, 3.8vh, 42px); }
 .app--tv .company-card__delta.delta--flat { font-size: 12px; }
 .app--tv .company-card__change-label { font-size: 10px; }
@@ -1041,7 +1041,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .capital-board .card__title { display: flex; align-items: center; justify-content: space-between; font-size: clamp(14px, 1.5vw, 22px); margin: 0 0 4px; }
 .app--tv .capital-board > .muted { display: none; }
 .app--tv .tv-ready-count { display: inline; color: var(--accent); font-size: 12px; font-weight: 600; }
-.app--tv .tv-player-status { display: inline-block; width: 22px; color: #eac85b; font-size: 17px; vertical-align: middle; }
+.app--tv .tv-player-status { display: inline; margin-left: 6px; color: #eac85b; font-size: 1em; line-height: inherit; vertical-align: baseline; }
 .app--tv .tv-player-status.is-ready { color: var(--accent); }
 .app--tv .table { font-size: clamp(13px, 1.5vw, 24px); table-layout: fixed; }
 .app--tv .table th { font-size: clamp(10px, 1.2vw, 18px); }
@@ -1088,6 +1088,38 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .board-lobby-join .room-qr img { width: clamp(140px, 18vw, 260px); height: auto; }
 @media(max-width:600px) { .board-lobby-join { flex-direction: column; } }
 
-.app--tv .host-screen--finished .company-card { height: clamp(130px, 25vh, 270px); }
+.app--tv .host-screen--finished .company-card { height: clamp(98px, 18.75vh, 203px); padding-top: 10px; padding-bottom: 10px; gap: 3px; }
 
 .player-turn .btn.is-selected { border-color: var(--accent); background: rgba(158,225,90,.16); }
+
+/* Compact controls leave more room for the TV board. */
+.app--tv { padding: 1.5vh 1vw 1.5vh 2vw; gap: 22px; }
+.app--tv .app__header { min-height: 26px; gap: 8px; }
+.app--tv .brand__mark { width: 23px; height: 23px; border-radius: 6px; font-size: 17px; }
+.app--tv .brand__name { font-size: clamp(15px, 1.6vw, 22px); line-height: 1; }
+.app--tv .header-room { padding: 2px 7px; }
+.app--tv .header-room strong { font-size: clamp(14px, 1.6vw, 20px); }
+.app--tv .connection { display: block; flex: none; width: 9px; height: 9px; overflow: hidden; border-radius: 50%; background: #eac85b; font-size: 0; }
+.app--tv .connection.is-online { background: #2ecc71; }
+.app--tv .connection.is-offline { background: #ff5b5b; }
+.board-settings { position: relative; }
+.board-settings--compact .btn--small { padding: 4px 8px; font-size: 11px; }
+.board-settings--compact .board-settings__panel { position: absolute; z-index: 20; right: 0; top: calc(100% + 8px); width: min(320px, 85vw); padding: 16px; box-shadow: 0 12px 32px #000a; }
+.board-settings--compact .board-settings__panel h2 { font-size: 16px; }
+
+/* TV player holdings and influence cards. */
+.app--tv .tv-capital-table th:first-child { width: 22%; }
+.app--tv .tv-capital-table th:nth-child(2) { width: 16%; }
+.app--tv .tv-capital-table th:nth-child(3) { width: 34%; }
+.app--tv .tv-capital-table th:nth-child(2), .app--tv .tv-capital-table th:nth-child(3) { text-align: center; }
+.app--tv .tv-capital-table th:nth-child(4), .app--tv .tv-capital-table th:nth-child(5) { width: 14%; }
+.tv-card-slots, .tv-shares, .tv-share-group { display: flex; align-items: center; justify-content: center; }
+.tv-card-slots { gap: 5px; }
+.tv-card-slot { display: grid; place-items: center; width: 22px; height: 27px; border: 1px solid #e7ecf340; border-radius: 4px; color: var(--accent); font-size: 16px; font-weight: 800; line-height: 1; }
+.tv-card-slot.is-filled { border-color: #a6dd60a0; background: #a6dd601a; }
+.tv-shares { gap: 8px; }
+.tv-share-group { gap: 3px; }
+.tv-share { width: 7px; height: 20px; border-radius: 2px; background: color-mix(in srgb, var(--share-color) 12%, transparent); }
+.tv-share.is-owned { background: color-mix(in srgb, var(--share-color) 65%, #8c9298); }
+.tv-card-legend { display: flex; justify-content: center; align-items: center; gap: clamp(10px, 2vw, 30px); white-space: nowrap; color: var(--muted); font-size: clamp(10px, 1.1vw, 15px); }
+.tv-card-legend strong { color: var(--accent); font-size: 1.25em; margin-right: 3px; }
