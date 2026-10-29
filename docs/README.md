@@ -13,8 +13,8 @@
 | [BOARD_REDESIGN.md](BOARD_REDESIGN.md) | Согласованный проект постоянной доски и перехода на новую модель данных |
 | [ARCHITECTURE_OPTIONS.md](ARCHITECTURE_OPTIONS.md) | Обсуждаемые варианты смены инфраструктуры; не инструкция текущего деплоя |
 
-Основной сайт: [race-to-the-bottom-36n.pages.dev](https://race-to-the-bottom-36n.pages.dev/).
-Обычное обновление: изменения → проверки → merge в `main` → GitHub Actions → Supabase → Cloudflare Pages. Для обновления игры новый APK обычно не нужен.
+Основной сайт: [race-to-the-bottom.vercel.app](https://race-to-the-bottom.vercel.app/).
+Выпуск на Vercel и его проверки настраиваются; текущий статус и ручной способ описаны в [DEPLOYMENT.md](DEPLOYMENT.md). Для обычного обновления игры новый APK обычно не нужен.
 
 Прежние `CI_CD_SETUP.md` и `DEPLOYMENT.md` объединены в одну инструкцию деплоя; Android-инструкции собраны в `ANDROID_TV.md`. Пункты `todo.md` включены в `IMPROVEMENTS.md`. Спецификация первого офлайн-прототипа убрана как устаревшая: действующие правила и устройство приложения описаны отдельно. Предыдущие версии документов доступны в истории Git.
 

@@ -49,7 +49,7 @@ jobs:
         run: supabase stop --no-backup
 
   deploy:
-    name: Publish Supabase then Cloudflare
+    name: Publish Supabase
     needs: [check, database]
     if: >-
       github.event_name != 'pull_request' &&
@@ -64,9 +64,6 @@ jobs:
       SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
       MIGRATION_BASELINE_VERIFIED: ${{ vars.MIGRATION_BASELINE_VERIFIED }}
     steps:
       - uses: actions/checkout@v6
@@ -76,7 +73,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_PAGES_PROJECT; do
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; do
             if [[ -z "${!name}" ]]; then
               echo "::error::Missing GitHub configuration: $name"
               exit 1
@@ -107,11 +104,5 @@ jobs:
         run: supabase db push --linked --yes
       - name: Deploy Edge Functions using JWT settings in config.toml
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
-      - name: Publish existing Cloudflare Pages project
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
       - name: Record released revision
-        run: echo "Published commit $GITHUB_SHA to Supabase and Cloudflare Pages." >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Published commit $GITHUB_SHA to Supabase. Vercel publishes the frontend after required checks pass." >> "$GITHUB_STEP_SUMMARY"
