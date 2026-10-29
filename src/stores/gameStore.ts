@@ -12,7 +12,7 @@ interface Snapshot { session: Session; playerId: string | null; isHost: boolean;
 const SESSION_KEY = 'race-to-the-bottom:v3:session'
 const ROLE_KEY = 'race-to-the-bottom:v3:role'
 interface Hub { mode?: 'key' | 'display'; isDisplayOwner?: boolean; id: string; code: string; isManager: boolean; sessionId: string | null; roomCode?: string; key?: string }
-interface Draft extends Turn { stage: 'trading' | 'influence' }
+interface Draft extends Turn { stage: 'trading' | 'influence' | 'purchase' }
 const HUB_KEY = 'race-to-the-bottom:v3:hub'
 const DISPLAY_SECRET_KEY = 'race-to-the-bottom:display-secret'
 function displaySecret() {
@@ -68,9 +68,17 @@ export const useGameStore = defineStore('game', () => {
     const copy = JSON.parse(JSON.stringify(state)) as GameState; const target = copy.players.find(p => p.id === id)
     if (!target) return state
     target.stage = 'trading'
-    try { const result = previewTurn(copy,id,orders); result.players.find(p => p.id === id)!.stage = publicMe?.stage === 'ready' ? 'ready' : draft.value?.stage ?? 'trading'; return result } catch { return state }
+    try {
+      const result = previewTurn(copy,id,orders)
+      const player = result.players.find(p => p.id === id)!
+      const purchase = publicMe?.stage === 'ready' ? ownCards.value?.pending?.purchase : draft.value?.purchase
+      if (purchase) player.balance -= purchase === 'victory' ? 30 : 20
+      player.stage = publicMe?.stage === 'ready' ? 'ready' : draft.value?.stage ?? 'trading'
+      return result
+    } catch { return state }
   })
   const me = computed(() => localGame.value?.players.find(p => p.id === playerId.value))
+  const availableForPurchase = computed(() => (me.value?.balance ?? 0) + (draft.value?.purchase ? draft.value.purchase === 'victory' ? 30 : 20 : 0))
   const selectedCardId = computed(() => draft.value ? draft.value.cardId || null : ownCards.value?.selectedCardId)
   const hasHub = computed(() => !!hub.value)
 
@@ -107,7 +115,11 @@ export const useGameStore = defineStore('game', () => {
     }
     localStorage.setItem(SESSION_KEY, result.session.id)
     ensureDraft()
-
+    if (result.session.version >= privateVersion && ownCards.value && draft.value?.cardId && game.value?.phase === 'playing' && game.value.players.find(p => p.id === playerId.value)?.stage !== 'ready' && !ownCards.value.hand.some(card => card.id === draft.value!.cardId)) {
+      draft.value.cardId = ''
+      if (draft.value.stage === 'purchase') draft.value.stage = 'influence'
+      saveDraft()
+    }
   }
   function draftKey() { return `race-to-the-bottom:v3:draft:${session.value?.id}:${game.value?.matchId}:${playerId.value}:${game.value?.round}` }
   function ensureDraft() {
@@ -184,7 +196,9 @@ export const useGameStore = defineStore('game', () => {
   async function action(actionName: string, details: Record<string, unknown> = {}) {
     if (busy.value || !session.value) return
     if (actionName === 'end-trading' && draft.value && me.value?.stage === 'trading') { draft.value.stage = 'influence'; saveDraft(); return }
-    if (actionName === 'back-to-trading' && draft.value && me.value?.stage === 'influence') { draft.value.stage = 'trading'; saveDraft(); return }
+    if (actionName === 'back-to-influence' && draft.value) { draft.value.stage = 'influence'; saveDraft(); return }
+    if (actionName === 'choose-purchase' && draft.value) { draft.value.purchase = (details.purchase ?? null) as Turn['purchase']; saveDraft(); return }
+    if (actionName === 'back-to-trading' && draft.value && me.value?.stage === 'influence') { draft.value.stage = 'trading'; draft.value.purchase = null; saveDraft(); return }
     if (actionName === 'unselect-card') {
       // Cancellation only changes this turn's local choice; never send it to the server.
       if (game.value?.phase !== 'playing' || !playerId.value || game.value.players.find(p => p.id === playerId.value)?.stage === 'ready') return
@@ -194,14 +208,15 @@ export const useGameStore = defineStore('game', () => {
     }
     if (actionName === 'select-card' && draft.value && me.value?.stage === 'influence') { draft.value.cardId = String(details.cardId); saveDraft(); return }
     if (actionName === 'finish-turn') {
-      if (!draft.value || !selectedCardId.value || me.value?.stage !== 'influence') return
+      if (!draft.value || !selectedCardId.value || !['influence','purchase'].includes(me.value?.stage ?? '')) return
+      if (draft.value.stage === 'influence' && me.value && availableForPurchase.value >= ((me.value.influenceCards ?? []).length === 3 ? 30 : 20)) { draft.value.stage = 'purchase'; saveDraft(); return }
       actionName = 'submit-turn'; details = { turn: { ...draft.value, cardId:selectedCardId.value } }
     }
-    if (actionName === 'exchange-card') details = { ...details, round:round.value, selectedCardId:selectedCardId.value }
+    if (actionName === 'exchange-card' || actionName === 'exchange-hand') details = { ...details, round:round.value, selectedCardId:selectedCardId.value }
     switchingLobby = actionName === 'new-lobby'
     busy.value = true; error.value = null
     const id = session.value.id; const token = generation
-    try { const result = await call('game-action', { sessionId: id, matchId:game.value?.matchId, action: actionName, ...details }); if (token === generation) { if (switchingLobby) { leave(); apply(result); setRole('main'); subscribe() } else apply(result) } }
+    try { const result = await call('game-action', { sessionId: id, matchId:game.value?.matchId, action: actionName, ...details }); if (token === generation) { if (switchingLobby) { leave(); apply(result); setRole('main'); subscribe() } else { apply(result); if (actionName === 'exchange-hand' && !error.value && draft.value) { draft.value.cardId = ''; saveDraft() } } } }
     catch (caught) { error.value = caught instanceof Error ? caught.message : 'Ошибка хода'; await sync() }
     finally { switchingLobby = false; busy.value = false }
   }
@@ -287,6 +302,6 @@ export const useGameStore = defineStore('game', () => {
     finally { busy.value = false }
   }
   function exitHub() { if (hubTimer) clearTimeout(hubTimer); hubTimer = null; hub.value = null; localStorage.removeItem(HUB_KEY); leave() }
-  return { openDisplay, hub, hasHub, marketHistory, draft, selectedCardId, hubAction, displayAction, exitHub, undoTrade, game, players, companies, me, phase, round, totalRounds, roomCode, minPrice, maxPrice, winnerIds, ranking, hasRoom, ownCards, isMain, role, error, busy, restoring, restoreFailed, connection, connect, action, restore, leave, setRole, canBuy, canSell,
+  return { openDisplay, hub, hasHub, marketHistory, draft, availableForPurchase, selectedCardId, hubAction, displayAction, exitHub, undoTrade, game, players, companies, me, phase, round, totalRounds, roomCode, minPrice, maxPrice, winnerIds, ranking, hasRoom, ownCards, isMain, role, error, busy, restoring, restoreFailed, connection, connect, action, restore, leave, setRole, canBuy, canSell,
     buyShare: (companyId: CompanyId) => localTrade(companyId,'buy'), sellShare: (companyId: CompanyId) => localTrade(companyId,'sell') }
 })

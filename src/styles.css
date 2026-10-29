@@ -1089,3 +1089,5 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 @media(max-width:600px) { .board-lobby-join { flex-direction: column; } }
 
 .app--tv .host-screen--finished .company-card { height: clamp(130px, 25vh, 270px); }
+
+.player-turn .btn.is-selected { border-color: var(--accent); background: rgba(158,225,90,.16); }

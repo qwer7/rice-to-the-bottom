@@ -70,6 +70,6 @@ describe('Asymmetric cards', () => {
       for (const own of Object.values(privatePlayers)) expect(new Set([...own.hand,...own.deck,...own.discard].map(c=>c.id)).size).toBe(21)
       ;({state,privatePlayers}=nextRound(state,privatePlayers))
     }
-    expect(state.phase).toBe('finished')
+    expect(state.phase).toBe('playing'); expect(state.round).toBe(9)
   })
 })

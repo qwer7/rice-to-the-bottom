@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { createLobby, addPlayer, startGame, createPrivateState, playerView } from '../../supabase/functions/_shared/game'
+import { createLobby, addPlayer, startGame, createPrivateState, playerView, totalCapital } from '../../supabase/functions/_shared/game'
 const mocked = vi.hoisted(()=>({ invoke:vi.fn(), onUpdate:null as null | ((payload:any)=>void) }))
 vi.mock('../lib/supabase',()=>({hasSupabase:true,supabase:{auth:{getSession:async()=>({data:{session:{}}})},functions:{invoke:mocked.invoke},channel:()=>({on(_event:any,_filter:any,callback:any){mocked.onUpdate=callback;return this},subscribe(){return this}}),removeChannel:vi.fn()}}))
 import { useGameStore } from '../stores/gameStore'
@@ -109,9 +109,42 @@ describe('Local draft and one turn submission',()=>{
   expect(mocked.invoke).not.toHaveBeenCalled(); expect(store.me?.balance).toBe(22); expect(store.me?.tradesUsed).toBe(4)
   expect(store.players[1].balance).toBe(30);expect(store.players[1].portfolio.BLUEWELL).toBe(0)
   await store.action('end-trading');await store.action('select-card',{cardId:own.hand[0].id});expect(mocked.invoke).not.toHaveBeenCalled()
-  expect(store.me?.stage).toBe('influence'); await store.action('finish-turn')
+  expect(store.me?.stage).toBe('influence'); await store.action('finish-turn'); expect(store.me?.stage).toBe('purchase'); await store.action('finish-turn')
   expect(mocked.invoke).toHaveBeenCalledTimes(1)
   expect(mocked.invoke.mock.calls[0][1].body).toMatchObject({action:'submit-turn',turn:{round:1,cardId:own.hand[0].id,trades:[{action:'buy',companyId:'BLUEWELL'},{action:'buy',companyId:'BLUEWELL'},{action:'sell',companyId:'BLUEWELL'},{action:'buy',companyId:'REDSTONE'}]}})
   store.leave()
  })
+ it('returns from purchase to market selection when another device exchanges the hand',async()=>{
+  const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
+  state.players[1].influenceCards=['analyst']
+  const session={id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state}
+  mocked.invoke.mockResolvedValue({data:{session,playerId:'b',isHost:false,private:own},error:null})
+  const store=useGameStore(); await store.connect('player','ABC234','Б')
+  await store.action('end-trading'); await store.action('select-card',{cardId:own.hand[0].id}); await store.action('finish-turn')
+  expect(store.me?.stage).toBe('purchase')
+  await store.action('choose-purchase',{purchase:'broker'})
+  const newHand=createPrivateState().hand.map((card,i)=>({...card,id:`new-${i}`}))
+  const updated={...session,version:2}
+  mocked.invoke.mockResolvedValue({data:{session:updated,playerId:'b',isHost:false,private:{...own,hand:newHand,selectedCardId:null,exchanged:true,exchangesUsed:1}},error:null})
+  mocked.onUpdate!({new:updated})
+  await vi.waitFor(()=>expect(store.ownCards?.hand[0].id).toBe('new-0'))
+  expect(store.selectedCardId).toBeNull(); expect(store.me?.stage).toBe('influence'); expect(store.draft?.purchase).toBe('broker')
+  expect(JSON.parse(memory.get(`race-to-the-bottom:v3:draft:room:${state.matchId}:b:1`)!)).toMatchObject({cardId:'',stage:'influence'})
+  mocked.invoke.mockClear(); await store.action('finish-turn'); expect(mocked.invoke).not.toHaveBeenCalled()
+  store.leave()
+ })
+ it('previews purchase and cancellation privately, including when returning to the market card',async()=>{
+  const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
+  const session={id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state}
+  mocked.invoke.mockResolvedValue({data:{session,playerId:'b',isHost:false,private:own},error:null})
+  const store=useGameStore(); await store.connect('player','ABC234','Б')
+  await store.action('end-trading'); await store.action('select-card',{cardId:own.hand[0].id}); await store.action('finish-turn')
+  await store.action('choose-purchase',{purchase:'broker'})
+  expect(store.me?.balance).toBe(10); expect(totalCapital(store.me!,store.companies)).toBe(10)
+  expect(store.players[1].balance).toBe(30); expect(store.game?.players[1].balance).toBe(30)
+  await store.action('back-to-influence'); await store.action('finish-turn'); expect(store.me?.stage).toBe('purchase')
+  await store.action('choose-purchase',{purchase:null}); expect(store.me?.balance).toBe(30); expect(totalCapital(store.me!,store.companies)).toBe(30); expect(store.players[1].balance).toBe(30)
+  store.leave()
+ })
+
 })

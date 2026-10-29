@@ -19,7 +19,7 @@ async function create() { localStorage.setItem('race-to-the-bottom:display-name'
           <ul class="lobby-roster"><li v-for="player in store.players" :key="player.id"><strong>{{ player.name }}</strong><span v-if="player.id === store.me?.id" class="badge">Вы</span><button v-else class="btn btn--small btn--danger" :disabled="store.busy" @click="store.action('remove-player',{targetPlayerId:player.id})">Удалить</button></li></ul>
           <button class="btn btn--primary" :disabled="store.busy || store.players.length < 2" @click="store.action('start')">Начать партию</button>
         </template>
-        <p v-else class="muted">Раунд {{ store.round }} / {{ store.totalRounds }} · {{ store.phase === 'playing' ? 'игроки делают ходы' : store.phase === 'reveal' ? 'карты раскрыты' : 'партия завершена' }}</p>
+        <p v-else class="muted">Раунд {{ store.round }} · {{ store.phase === 'playing' ? 'игроки делают ходы' : store.phase === 'reveal' ? 'карты раскрыты' : 'партия завершена' }}</p>
         <button v-if="store.phase !== 'lobby'" class="btn" :disabled="store.busy" @click="confirmation = 'reset'">{{ store.phase === 'finished' ? 'Играть снова' : 'Сбросить партию' }}</button>
         <button v-if="store.game?.lobbyMode !== 'first-player'" class="btn btn--danger" :disabled="store.busy" @click="confirmation = 'close'">Закрыть лобби</button>
       </template>

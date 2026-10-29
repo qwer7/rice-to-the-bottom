@@ -44,6 +44,6 @@ describe('Atomic hidden turns',()=>{
    for(const own of Object.values(privatePlayers)) expect(new Set([...own.hand,...own.deck,...own.discard].map(c=>c.id)).size).toBe(21)
    ;({state,privatePlayers}=nextRound(state,privatePlayers))
   }
-  expect(state.phase).toBe('finished'); expect(privatePlayers.a.exchangesUsed).toBe(5)
+  expect(state.phase).toBe('playing'); expect(state.round).toBe(9); expect(privatePlayers.a.exchangesUsed).toBe(5)
  })
 })

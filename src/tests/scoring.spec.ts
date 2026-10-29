@@ -13,10 +13,10 @@ describe('Prices and scoring', () => {
     let result=finishTurn(state,'a',privatePlayers); result=finishTurn(result.state,'b',result.privatePlayers)
     expect(result.state.companies.map(c=>c.price)).toEqual([9,1,4]); expect(result.state.lastReveal?.deltas).toEqual({REDSTONE:1,BLUEWELL:-1,GOLDSPARK:0})
   })
-  it('finishes after the eighth reveal and supports a draw', () => {
+  it('continues after the eighth reveal without a victory card', () => {
     const state=startGame(addPlayer(createLobby('a','А'),'b','Б')); state.round=8; state.phase='reveal'
     const result=nextRound(state,{a:createPrivateState(),b:createPrivateState()})
-    expect(result.state.phase).toBe('finished'); expect(result.state.winnerIds).toEqual(['a','b'])
+    expect(result.state.phase).toBe('playing'); expect(result.state.round).toBe(9); expect(result.state.winnerIds).toBeNull()
   })
   it('counts money and portfolio using current prices', () => {
     const state=startGame(addPlayer(createLobby('a','А'),'b','Б')); state.players[0].portfolio.REDSTONE=2; state.players[0].balance=25
