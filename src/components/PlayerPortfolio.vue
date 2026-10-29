@@ -18,7 +18,7 @@ const capital = computed(() => totalCapital(props.player, store.companies))
     <div class="portfolio-money"><span>Баланс</span><strong>{{ player.balance }}<span class="money-unit" aria-hidden="true">$</span></strong></div>
     <div class="portfolio-shares">
       <div class="portfolio-shares__heading"><span>Акции</span><span>Стоимость <strong>{{ portfolio }}<span class="money-unit" aria-hidden="true">$</span></strong></span></div>
-      <div class="portfolio-holdings"><div v-for="id in COMPANY_IDS" :key="id" class="portfolio-holding" :style="{ '--company-color': companyMeta(id).color }"><span>{{ companyMeta(id).name }}</span><strong>{{ player.portfolio[id] }}</strong><div class="share-dots" aria-hidden="true"><i v-for="n in player.portfolio[id]" :key="n"></i></div></div></div>
+      <div class="portfolio-holdings" :aria-label="COMPANY_IDS.map(id => `${companyMeta(id).name}: ${player.portfolio[id]} из 5`).join(', ')"><span v-for="id in COMPANY_IDS" :key="id" class="tv-share-group" :style="{ '--share-color': companyMeta(id).color }" aria-hidden="true"><span v-for="slot in 5" :key="slot" class="tv-share" :class="{ 'is-owned': slot <= player.portfolio[id] }"></span></span></div>
     </div>
     <div class="portfolio-capital"><span>Капитал</span><strong>{{ capital }}<span class="money-unit" aria-hidden="true">$</span></strong></div>
   </div>

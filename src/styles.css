@@ -891,7 +891,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .table-slot__privacy { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; }
 .table-slot__heading .eyebrow { font-size: 10px; letter-spacing: .04em; }
 .cancel-card { min-height: 28px; padding: 4px 8px; font-size: 11px; }
-.influence-picker .table-slot > .table-influence { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: center; gap: 10px; width: 100%; min-height: 53px; padding: 7px 9px; text-align: left; }
+.influence-picker .table-slot .table-influence { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: center; gap: 10px; width: 100%; min-height: 53px; padding: 7px 9px; text-align: left; }
 .table-influence .influence-card__header { display: contents; }
 .table-influence .influence-card__kind { display: none; }
 .table-influence .influence-card__effects { grid-column: 2; }
@@ -1088,12 +1088,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .board-lobby-join .room-qr img { width: clamp(140px, 18vw, 260px); height: auto; }
 @media(max-width:600px) { .board-lobby-join { flex-direction: column; } }
 
-.app--tv .host-screen--finished .company-card { height: clamp(98px, 18.75vh, 203px); padding-top: 10px; padding-bottom: 10px; gap: 3px; }
 
 .player-turn .btn.is-selected { border-color: var(--accent); background: rgba(158,225,90,.16); }
 
 /* Compact controls leave more room for the TV board. */
-.app--tv { padding: 1.5vh 1vw 1.5vh 2vw; gap: 22px; }
+.app--tv { padding: 1.5vh 2vw; gap: 22px; }
 .app--tv .app__header { min-height: 26px; gap: 8px; }
 .app--tv .brand__mark { width: 23px; height: 23px; border-radius: 6px; font-size: 17px; }
 .app--tv .brand__name { font-size: clamp(15px, 1.6vw, 22px); line-height: 1; }
@@ -1115,14 +1114,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .tv-capital-table th:nth-child(4), .app--tv .tv-capital-table th:nth-child(5) { width: 14%; }
 .tv-card-slots, .tv-shares, .tv-share-group { display: flex; align-items: center; justify-content: center; }
 .tv-card-slots { gap: 5px; }
-.tv-card-slot { display: grid; place-items: center; width: 22px; height: 27px; border: 1px solid #e7ecf340; border-radius: 4px; color: var(--accent); font-size: 16px; font-weight: 800; line-height: 1; }
-.tv-card-slot.is-filled { border-color: #a6dd60a0; background: #a6dd601a; }
+.tv-card-slot { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #e7ecf340; border-radius: 4px; color: var(--accent); font-size: clamp(24px, 2.5vw, 32px); font-weight: 800; line-height: 1; }
+.tv-card-slot.is-filled { border-color: transparent; background: #a6dd601a; }
 .tv-shares { gap: 8px; }
 .tv-share-group { gap: 3px; }
-.tv-share { width: 7px; height: 20px; border-radius: 2px; background: color-mix(in srgb, var(--share-color) 12%, transparent); }
+.tv-share { width: 7px; height: 20px; border-radius: 2px; background: color-mix(in srgb, var(--share-color) 6%, transparent); }
 .tv-share.is-owned { background: color-mix(in srgb, var(--share-color) 65%, #8c9298); }
-.tv-card-legend { display: flex; justify-content: center; align-items: center; gap: clamp(10px, 2vw, 30px); white-space: nowrap; color: var(--muted); font-size: clamp(10px, 1.1vw, 15px); }
-.tv-card-legend strong { color: var(--accent); font-size: 1.25em; margin-right: 3px; }
+.tv-card-legend { display: flex; justify-content: center; align-items: center; gap: clamp(14px, 2.5vw, 36px); white-space: nowrap; color: var(--muted); font-size: clamp(12px, 1.3vw, 18px); }
+.tv-card-legend > span { display: inline-flex; align-items: center; gap: 3px; }
+.tv-card-legend strong { display: inline-flex; align-items: center; justify-content: center; color: rgb(158 225 90 / 60%); font-size: clamp(24px, 2.5vw, 32px); line-height: 1; }
 
 /* TV lobby: keep the QR and room code together. */
 .app--tv .host-screen--lobby { display: block; min-height: 0; }
@@ -1146,9 +1146,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
 .player-influences { margin-top: 12px; }
 .player-influences__slots { display: flex; align-items: center; gap: 7px; }
-.player-influence-slot { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid #e7ecf340; border-radius: 5px; background: transparent; color: var(--accent); font-size: 21px; font-weight: 800; line-height: 1; }
-.player-influence-slot.is-filled { border-color: #a6dd60a0; background: #a6dd601a; cursor: pointer; }
-.player-influence-slot[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.player-influence-slot { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid #e7ecf340; border-radius: 5px; background: transparent; color: var(--accent); font-size: 24px; font-weight: 800; line-height: 1; }
+.player-influence-slot.is-filled { border-color: transparent; background: #a6dd601a; cursor: pointer; }
+.player-influence-slot[aria-expanded="true"] { background: #a6dd6033; }
 .player-influences__help { margin-top: 9px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 12px; line-height: 1.4; }
 .player-influences__help p { margin-top: 4px; }
 
@@ -1202,6 +1202,150 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .player-summary__body .share-dots { display: none; }
   .player-summary__body .player-influences { grid-area: cards; position: relative; margin: 0; }
   .player-summary__body .player-influences__slots { flex-direction: column; gap: 3px; }
-  .player-summary__body .player-influence-slot { width: 27px; height: 27px; font-size: 16px; }
+  .player-summary__body .player-influence-slot { width: 32px; height: 32px; font-size: 24px; }
   .player-summary__body .player-influences__help { position: absolute; z-index: 20; right: 0; top: 100%; width: min(240px, 75vw); border: 1px solid var(--border); box-shadow: 0 8px 24px #0008; }
 }
+
+/* Shared board lobby for TV and desktop. */
+.board-lobby { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.board-lobby__header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px 18px; border: 1px solid rgba(158,225,90,.35); border-radius: 14px; background: rgba(158,225,90,.07); color: var(--accent); }
+.board-lobby__header h1, .board-lobby__header strong { margin: 0; font: inherit; font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.board-lobby__content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: 16px; min-height: min(70vh, 600px); }
+.board-lobby__code { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px; min-width: 0; }
+.board-lobby__code .room-qr img { width: min(100%, clamp(220px, 55vh, 440px)); height: auto; }
+.board-lobby__header strong { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(22px, 3vw, 36px); letter-spacing: .12em; line-height: 1; }
+.board-lobby__content .room-lobby { height: 100%; min-width: 0; }
+.board-lobby__content .room-lobby > .muted:last-child { margin-top: auto; }
+.app--tv .host-screen--lobby { display: block; min-height: 0; }
+@media (max-width: 600px) {
+  .board-lobby__content { grid-template-columns: 1fr; }
+}
+
+/* Reveal uses the same stock board, replacing the player table temporarily. */
+.board-reveal .reveal-cards { margin: 12px 0 0; }
+.app--tv .board-reveal .reveal-cards { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; }
+.app--tv .board-reveal .reveal-cards h3 { font-size: 14px; margin-bottom: 6px; }
+.app--tv .board-reveal .influence-card { min-height: 0; padding: 10px; }
+.app--tv .board-reveal .influence-card__header { gap: 6px; }
+.app--tv .board-reveal .influence-card__symbol { width: 28px; height: 28px; font-size: 22px; }
+.app--tv .board-reveal .influence-card__kind { font-size: 10px; }
+.app--tv .board-reveal .card-effect { gap: 3px; }
+.app--tv .board-reveal .card-effect__company { font-size: 10px; }
+.app--tv .board-reveal .card-effect strong { font-size: 20px; }
+.reveal-money { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-top: 10px; font-size: 12px; line-height: 1.4; color: var(--muted); }
+.reveal-money > div { display: flex; justify-content: space-between; gap: 6px; }
+.reveal-money strong { color: var(--text); white-space: nowrap; }
+.reveal-money strong.delta--up { color: var(--up); }
+.reveal-money strong.delta--down { color: var(--down); }
+.reveal-money small { display: block; margin-top: 4px; font-size: 10px; line-height: 1.3; }
+.board-reveal .reveal-cards article { display: flex; flex-direction: column; }
+.board-reveal .reveal-money { margin-top: auto; padding-top: 10px; }
+
+/* Market cards: two diagonal halves share one design in the hand and on the board. */
+.influence-card { display: grid; grid-template-rows: 1fr 1fr; aspect-ratio: 1; min-height: 0; padding: 10px; gap: 0; border: 1px solid #536172; border-radius: 12px; background: linear-gradient(135deg, var(--card-glow-a) 0%, var(--card-glow-a) 48%, var(--card-glow-b) 52%, var(--card-glow-b) 100%), #181f29; }
+.market-card-half { display: flex; flex-direction: column; justify-content: space-between; min-height: 0; color: var(--company-color); }
+.market-card-half--bottom { flex-direction: column-reverse; align-items: flex-end; text-align: right; }
+.market-card-half--empty { color: var(--muted); opacity: .55; }
+.market-card-half__label { font-size: clamp(9px, 1.2vw, 13px); font-weight: 800; letter-spacing: .015em; white-space: nowrap; }
+.market-card-half__value { font-size: clamp(20px, 3vw, 32px); font-weight: 800; line-height: 1; }
+.influence-picker .hand-item { padding: 0; border: 1px solid transparent; background: none; }
+.influence-picker .hand-item > .influence-card { padding: 10px; border: 1px solid #536172; background: linear-gradient(135deg, var(--card-glow-a) 0%, var(--card-glow-a) 48%, var(--card-glow-b) 52%, var(--card-glow-b) 100%), #181f29; }
+.influence-picker .table-slot .table-influence { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; width: 120px; min-height: 0; aspect-ratio: 1; padding: 8px; }
+.app--tv .board-reveal .influence-card { width: clamp(100px, 22vh, 120px); max-width: 100%; aspect-ratio: 1; min-height: 0; padding: 10px; }
+.influence-picker .hand-item > .influence-card { width: clamp(100px, 22vh, 120px); max-width: 100%; align-self: center; }
+.winner-crown { margin-left: 6px; color: #eac85b; font-size: 1.15em; line-height: 1; }
+.board-winner { color: var(--muted); font-size: clamp(14px, 1.6vw, 20px); font-weight: 600; text-align: center; }
+.board-winner strong { color: #eac85b; font-size: 1.3em; }
+.winner-crown { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: baseline; }
+.winner-crown svg { display: block; width: 100%; height: 100%; }
+.portfolio-holdings { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.player-summary__body .portfolio-holdings { display: flex; gap: 6px; }
+.card-mini { background: linear-gradient(135deg, var(--card-glow-a) 0%, var(--card-glow-a) 48%, var(--card-glow-b) 52%, var(--card-glow-b) 100%), #181f29; }
+.card-mini--single { background: color-mix(in srgb, var(--card-color-a) 18%, #181f29); }
+.influence-picker .hand-item { min-height: 0; }
+.influence-picker .hand-item > .influence-card,
+.influence-picker .table-slot .table-influence { aspect-ratio: 4 / 3; padding: 6px; }
+.influence-picker .market-card-half__label { font-size: 8px; }
+.influence-picker .market-card-half__value { font-size: 26px; }
+.app--tv .board-reveal .influence-card { aspect-ratio: 4 / 3; padding: 6px; }
+.app--tv .board-reveal .market-card-half__label { font-size: 8px; }
+.app--tv .board-reveal .market-card-half__value { font-size: 26px; }
+.table-slot--filled .table-slot__heading { justify-content: flex-end; }
+.table-slot__played { display: flex; align-items: center; gap: 8px; }
+.table-slot__vertical-label { writing-mode: vertical-rl; transform: rotate(180deg); color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.influence-picker .table-slot .table-influence { gap: 0; }
+.influence-picker .table-slot--filled { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.table-slot--filled .table-slot__heading { grid-column: 2; grid-row: 1; }
+.table-slot--filled .table-slot__played { grid-column: 1; grid-row: 1; }
+@media (max-width: 600px) {
+  .influence-picker .hand-item.is-armed { border-color: transparent; box-shadow: none; }
+  .influence-picker .hand-item.is-armed::after { content: none; }
+  .influence-picker .hand-item > .influence-card { position: relative; }
+  .influence-picker .hand-item.is-armed > .influence-card { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 5px 18px #0004; }
+  .influence-picker .hand-item.is-armed > .influence-card::after { content: '✓'; position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; color: #17200f; background: var(--accent); font-size: 10px; font-weight: 800; }
+}
+
+/* iPad player uses the same compact layout and touch controls as a phone. */
+.app--tablet .desktop-only { display: none !important; }
+.app--tablet .mobile-only { display: inline-flex !important; }
+.app--tablet.app--in-room { min-height: 100dvh; padding: 8px 10px max(8px, env(safe-area-inset-bottom)); gap: 8px; }
+.app--tablet.app--in-room .app__header { flex-wrap: nowrap; justify-content: space-between; gap: 6px; margin: 0; min-height: 36px; }
+.app--tablet .brand { flex-shrink: 0; gap: 0; }
+.app--tablet .brand > div { display: none; }
+.app--tablet .brand__mark { width: 26px; height: 26px; border-radius: 8px; font-size: 20px; }
+.app--tablet .app__tools { flex-wrap: nowrap; gap: 6px; }
+.app--tablet .header-room { min-height: 30px; padding: 4px 7px; gap: 0; }
+.app--tablet .header-room > span { display: none; }
+.app--tablet .header-room strong { font-size: 12px; letter-spacing: .06em; }
+.app--tablet .connection { display: block; flex-shrink: 0; font-size: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.app--tablet .connection.is-online { background: var(--accent); }
+.app--tablet .nav-button { display: grid; place-items: center; width: 36px; height: 36px; padding: 8px; border-radius: 9px; }
+.app--tablet .nav-icon { display: block; width: 18px; height: 18px; }
+.app--tablet .nav-label { display: none; }
+.app--tablet .client-screen, .app--tablet .stack { gap: 8px; }
+.app--tablet .card { padding: 11px 12px; border-radius: 12px; }
+.app--tablet .player-summary__body { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'heading cards' 'portfolio cards'; align-items: center; gap: 4px 10px; }
+.app--tablet .player-summary__body .section-heading { grid-area: heading; flex-wrap: nowrap; gap: 8px; margin: 0; }
+.app--tablet .player-summary__body .section-heading h2 { font-family: inherit; font-size: 15px; }
+.app--tablet .player-summary__body .section-heading > .muted { font-size: 10px; }
+.app--tablet .player-summary__body .portfolio-summary { grid-area: portfolio; min-width: 0; grid-template-columns: 1fr 1fr; gap: 5px 8px; }
+.app--tablet .portfolio-money, .app--tablet .portfolio-capital { flex-direction: row; align-items: baseline; gap: 7px; }
+.app--tablet .portfolio-capital { justify-content: flex-end; }
+.app--tablet .portfolio-money > span, .app--tablet .portfolio-capital > span { font-size: 10px; }
+.app--tablet .portfolio-money > strong, .app--tablet .portfolio-capital > strong { font-size: 19px; }
+.app--tablet .portfolio-money { grid-column: 1; grid-row: 1; }
+.app--tablet .portfolio-capital { grid-column: 2; grid-row: 1; }
+.app--tablet .portfolio-shares { grid-column: 1 / -1; border: 0; padding: 0; }
+.app--tablet .portfolio-shares__heading { display: none; }
+.app--tablet .player-influences { grid-area: cards; position: relative; margin: 0; }
+.app--tablet .player-influences__slots { flex-direction: column; gap: 3px; }
+.app--tablet .player-influence-slot { width: 32px; height: 32px; font-size: 24px; }
+.app--tablet .player-influences__help { position: absolute; z-index: 20; right: 0; top: 100%; width: min(240px, 75vw); border: 1px solid var(--border); box-shadow: 0 8px 24px #0008; }
+.app--tablet .stage-heading { flex-wrap: nowrap; gap: 8px; margin: 0 0 8px; }
+.app--tablet .stage-heading__title { display: flex; align-items: center; gap: 7px; }
+.app--tablet .stage-heading h2, .app--tablet .purchase-heading h2 { font-family: inherit; font-size: 18px; }
+.app--tablet .trade-cards { grid-template-columns: 1fr; gap: 7px; margin: 0 0 8px; }
+.app--tablet .trade-card { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 9px; border-top-width: 1px; border-left-width: 3px; padding: 9px; border-radius: 9px; }
+.app--tablet .trade-card h3 { font-size: 10px; margin: 0; }
+.app--tablet .trade-card__stats { flex-direction: row; align-items: center; gap: 10px; margin: 0; }
+.app--tablet .trade-card__stats > div { gap: 1px; min-width: 31px; }
+.app--tablet .trade-card__stats > div:last-child { text-align: right; }
+.app--tablet .trade-card__stats span { font-size: 9px; }
+.app--tablet .trade-card__stats strong { font-size: 19px; }
+.app--tablet .trade-card__buttons { display: flex; gap: 6px; }
+.app--tablet .trade-card__buttons .btn { display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; font-size: 24px; line-height: 1; }
+.app--tablet .trade-card__buttons .btn--sell { order: -1; }
+.app--tablet .planning-hand { margin: 10px 0; }
+.app--tablet .influence-picker .hand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.app--tablet .influence-picker .hand-item { position: relative; min-height: 0; padding: 0; gap: 8px; touch-action: none; user-select: none; cursor: grab; }
+.app--tablet .influence-picker .hand-item__actions { display: none; }
+.app--tablet .influence-picker .hand-grid.has-armed-card .hand-item:not(.is-armed) { opacity: .35; }
+.app--tablet .influence-picker .hand-item.is-armed { border-color: transparent; box-shadow: none; }
+.app--tablet .influence-picker .hand-item > .influence-card { position: relative; }
+.app--tablet .influence-picker .hand-item.is-armed > .influence-card { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 5px 18px #0004; }
+.app--tablet .influence-picker .hand-item.is-armed > .influence-card::after { content: '✓'; position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; color: #17200f; background: var(--accent); font-size: 10px; font-weight: 800; }
+.app--tablet .influence-picker .hand-item.is-dragging { opacity: .2; cursor: grabbing; }
+.app--tablet .influence-picker .table-slot.is-drop-available { border-color: #9ee15a70; }
+.app--tablet .influence-picker .table-slot.is-drop-target { border-style: solid; border-color: var(--accent); background: #9ee15a20; box-shadow: inset 0 0 0 1px var(--accent); }
+.app--tablet .influence-picker .exchange-slot { min-height: 66px; }
+.app--tablet .influence-picker .exchange-slot.is-unavailable { opacity: .55; }

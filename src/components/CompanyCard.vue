@@ -13,6 +13,7 @@ const props = defineProps<{
   max: number
 }>()
 const meta = computed(() => companyMeta(props.company.id))
+const previousPrice = computed(() => props.previousPrice ?? (props.delta === null ? null : props.company.price - props.delta))
 const priceLevel = computed(() => Math.max(0, Math.min(100, (props.company.price - props.min) / Math.max(1, props.max - props.min) * 100)))
 const deltaView = computed(() => {
   if (props.delta === null) return { text: props.initial ? 'Стартовая цена' : 'Ждём раскрытия', className: 'delta--flat' }
@@ -46,8 +47,8 @@ const deltaView = computed(() => {
     </div>
     <div class="company-card__bottom">
       <div class="company-card__change">
-        <span class="company-card__change-label">{{ previousPrice !== undefined ? `${previousPrice}$ → ${company.price}$` : deltaRound ? `За раунд ${deltaRound}` : 'Изменение за раунд' }}</span>
-        <span class="delta" :class="deltaView.className">{{ deltaView.text }}</span>
+        <span v-if="previousPrice !== null" class="company-card__change-label">{{ previousPrice }}$ → {{ company.price }}$</span>
+        <span v-if="delta !== null" class="delta" :class="deltaView.className">{{ deltaView.text }}</span>
       </div>
       <div class="company-card__price">{{ company.price }}<span class="money-unit" aria-hidden="true">$</span></div>
     </div>

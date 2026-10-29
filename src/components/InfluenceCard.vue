@@ -15,17 +15,17 @@ const rows = computed(() => {
   const effect = {company:c.company,value:c.delta > 0 ? '+3' : '−3',direction:c.delta > 0 ? '↑' : '↓'}
   return c.delta > 0 ? [effect,{company:null,value:'—',direction:'↓'}] : [{company:null,value:'—',direction:'↑'},effect]
 })
-const kindLabel = computed(() => props.card.kind === 'swap' ? 'Обмен цен' : props.card.kind === 'pair' ? 'Рост и падение' : props.card.delta > 0 ? 'Рост' : 'Падение')
-const icon = computed(() => props.card.kind === 'swap' ? '⇄' : props.card.kind === 'pair' ? '↕' : props.card.delta > 0 ? '↗' : '↘')
 const description = computed(() => props.card.kind === 'swap' ? `Обмен цен: ${props.card.a} и ${props.card.b}` : effects.value.map(e => `${e.company} ${e.delta! > 0 ? '+' : ''}${e.delta}`).join(', '))
 </script>
 <template>
-  <div v-if="compact" class="card-mini" role="img" :aria-label="description" :title="description">
+  <div v-if="compact" class="card-mini" :class="{ 'card-mini--single': card.kind === 'single' }" :style="cardTheme(card)" role="img" :aria-label="description" :title="description">
     <span v-if="card.kind === 'single'" class="card-mini__icon" aria-hidden="true">↓</span>
     <template v-for="(effect,index) in effects" :key="effect.company"><span v-if="card.kind === 'swap' && index === 1" class="card-mini__icon" aria-hidden="true">⇄</span><span class="card-mini__effect" :style="{ color: companyMeta(effect.company).color }" aria-hidden="true"><i v-if="card.kind === 'swap'"></i><strong v-if="effect.delta !== undefined">{{ effect.delta > 0 ? '+' : '−' }}{{ Math.abs(effect.delta) }}</strong></span></template>
   </div>
-  <div v-else class="influence-card" :style="cardTheme(card)" :aria-label="description">
-    <div class="influence-card__header"><span class="influence-card__symbol" aria-hidden="true">{{ icon }}</span><span class="influence-card__kind">{{ kindLabel }}</span></div>
-    <div class="influence-card__effects"><div v-for="(row,index) in rows" :key="index" class="card-effect" :class="{ 'card-effect--empty': !row.company }" :style="{ '--company-color': row.company ? companyMeta(row.company).color : undefined }"><span class="card-effect__direction" aria-hidden="true">{{ row.direction }}</span><span class="card-effect__company">{{ row.company ?? (index === 0 ? 'Без роста' : 'Без снижения') }}</span><strong>{{ row.value }}</strong></div></div>
+  <div v-else class="influence-card" :style="cardTheme(card)" role="img" :aria-label="description">
+    <div v-for="(row, index) in rows" :key="index" class="market-card-half" :class="[index === 0 ? 'market-card-half--top' : 'market-card-half--bottom', { 'market-card-half--empty': !row.company }]" :style="{ '--company-color': row.company ? companyMeta(row.company).color : undefined }" aria-hidden="true">
+      <span class="market-card-half__label"><span>{{ row.direction }}</span> {{ row.company ?? (index === 0 ? 'Без роста' : 'Без снижения') }}</span>
+      <strong class="market-card-half__value">{{ row.value }}</strong>
+    </div>
   </div>
 </template>

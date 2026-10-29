@@ -9,7 +9,7 @@ import ClientScreen from '@/components/ClientScreen.vue'
 import BoardSettings from '@/components/BoardSettings.vue'
 import { useGameStore } from '@/stores/gameStore'
 const store = useGameStore()
-const { phone, tv:tvMode } = useDisplayMode()
+const { phone, tv:tvMode, tablet } = useDisplayMode()
 onMounted(async () => {
   if (location.pathname.replace(/\/$/, '') === '/ux/preview') return
   if (tvMode) { await store.openDisplay(); store.restoring = false; return }
@@ -21,7 +21,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div class="app" :class="{ 'app--personal': store.hasRoom && store.role !== 'board', 'app--in-room': store.hasRoom, 'app--tv': tvMode }">
+  <div class="app" :class="{ 'app--personal': store.hasRoom && store.role !== 'board', 'app--in-room': store.hasRoom, 'app--tv': tvMode || (store.hasRoom && store.role === 'board'), 'app--tablet': tablet && store.role !== 'board' }">
     <header class="app__header">
       <div class="brand"><span class="brand__mark" aria-hidden="true">↓</span><div><p class="brand__name">Race to the Bottom</p><p class="brand__caption">{{ !store.hasRoom ? 'Рынок меняете вы' : store.role === 'board' ? 'Доска результатов' : store.isMain ? 'Главный игрок' : 'Игрок' }}</p></div></div>
       <nav v-if="store.hasRoom || store.hasHub" class="app__tools" aria-label="Экраны игры">

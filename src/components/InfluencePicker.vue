@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { cardTheme } from '@/game/cardPresentation'
+import { useDisplayMode } from '@/composables/useDisplayMode'
 import InfluenceCard from './InfluenceCard.vue'
 import { useGameStore } from '@/stores/gameStore'
 const store = useGameStore()
+const { tablet } = useDisplayMode()
 const selected = computed(() => store.ownCards?.hand.find(c => c.id === store.selectedCardId))
 const hand = computed(() => store.ownCards?.hand.filter(c => c.id !== store.selectedCardId) ?? [])
 const mobile = ref(false)
@@ -23,7 +25,7 @@ function clearGesture() {
   gesture = null; drag.value = null; dropTarget.value = null
   if (active?.element.hasPointerCapture(active.id)) active.element.releasePointerCapture(active.id)
 }
-function updateMobile() { mobile.value = media?.matches ?? false; armedCardId.value = null; clearGesture() }
+function updateMobile() { mobile.value = (media?.matches ?? false) || tablet; armedCardId.value = null; clearGesture() }
 onMounted(() => { media = window.matchMedia('(max-width:600px)'); updateMobile(); media.addEventListener('change',updateMobile) })
 onBeforeUnmount(() => { media?.removeEventListener('change',updateMobile); clearGesture() })
 watch(() => hand.value.map(c => c.id).join('|'), () => {
@@ -83,8 +85,8 @@ function pointerCancel(event: PointerEvent) { if (gesture?.id === event.pointerI
   <section class="stack influence-picker">
     <div class="section-heading stage-heading"><div class="stage-heading__title"><p class="eyebrow">2/3</p><h2>Рыночная карта</h2></div><div class="stage-actions"><span class="badge">Обмены {{ store.ownCards?.exchangesUsed ?? 0 }}/5</span></div></div>
     <div ref="tableZone" class="table-slot" :class="{ 'table-slot--filled': selected, 'is-drop-target': dropTarget === 'table', 'is-drop-available': mobile && armedCard }">
-      <div class="table-slot__heading"><p class="eyebrow">На столе <span class="table-slot__privacy">· скрыто</span></p><div class="table-slot__actions"><button v-if="mobile && armedCard" class="btn btn--primary zone-play" :disabled="store.busy" @click="useCard('table')">Выложить</button><button v-if="selected" class="btn btn--small cancel-card" :disabled="store.busy" @click="store.action('unselect-card')">Отменить</button></div></div>
-      <InfluenceCard v-if="selected" :card="selected" class="table-influence" />
+      <div class="table-slot__heading"><p v-if="!selected" class="eyebrow">На столе</p><div class="table-slot__actions"><button v-if="mobile && armedCard" class="btn btn--primary zone-play" :disabled="store.busy" @click="useCard('table')">Выложить</button><button v-if="selected" class="btn btn--small cancel-card" :disabled="store.busy" @click="store.action('unselect-card')">Отменить</button></div></div>
+      <div v-if="selected" class="table-slot__played"><span class="table-slot__vertical-label">На столе</span><InfluenceCard :card="selected" class="table-influence" /></div>
     </div>
     <div class="hand-grid" :class="{ 'has-armed-card': mobile && armedCard }">
       <article v-for="card in hand" :key="card.id" class="hand-item" :style="cardTheme(card)" :class="{ 'is-armed': mobile && armedCardId === card.id, 'is-dragging': drag?.cardId === card.id }" :role="mobile ? 'button' : undefined" :tabindex="mobile ? 0 : undefined" :aria-pressed="mobile ? armedCardId === card.id : undefined" :aria-disabled="mobile ? store.busy : undefined" :aria-label="mobile ? `Выбрать карту ${card.id}` : undefined" @click="clickCard(card.id)" @keydown.enter.self.prevent="armCard(card.id)" @keydown.space.self.prevent="armCard(card.id)" @pointerdown="pointerDown($event,card.id)" @pointermove="pointerMove" @pointerup="pointerUp" @pointercancel="pointerCancel" @contextmenu="mobile && $event.preventDefault()">
@@ -94,7 +96,7 @@ function pointerCancel(event: PointerEvent) { if (gesture?.id === event.pointerI
     </div>
     <div v-if="mobile && (armedCard || drag)" ref="exchangeZone" class="table-slot exchange-slot" :class="{ 'is-drop-target': dropTarget === 'exchange', 'is-drop-available': armedCard && canExchange, 'is-unavailable': !canExchange }"><div class="table-slot__heading"><p class="eyebrow">Обмен карты</p><button class="btn zone-exchange" :disabled="!armedCard || !canExchange" @click="useCard('exchange')">Обменять карту</button></div></div>
     <button v-if="store.me?.influenceCards?.includes('analyst')" class="btn btn--block" :disabled="!canExchange" @click="store.action('exchange-hand')">Обменять всю руку</button>
-    <button class="btn btn--primary btn--block finish-turn" :disabled="store.busy || !selected" @click="store.action('finish-turn')">{{ store.busy ? 'Сохраняем…' : (store.me && store.availableForPurchase >= ((store.me.influenceCards ?? []).length === 3 ? 30 : 20) ? 'Перейти к покупке карты' : 'Закончить ход') }}</button>
+    <button class="btn btn--primary btn--block finish-turn" :disabled="store.busy || !selected" @click="store.action('finish-turn')">{{ store.busy ? 'Сохраняем…' : (store.me && store.availableForPurchase >= ((store.me.influenceCards ?? []).length === 3 ? 30 : store.influenceCardPrice) ? 'Перейти к покупке карты' : 'Закончить ход') }}</button>
     <div class="influence-picker__back"><button class="btn btn--block" :disabled="store.busy" @click="store.action('back-to-trading')"><span aria-hidden="true">←</span> Вернуться</button></div>
 
   </section>

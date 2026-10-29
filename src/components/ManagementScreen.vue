@@ -3,14 +3,14 @@ import { ref } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 const store = useGameStore()
 const confirmation = ref<'reset' | 'close' | 'new-lobby' | null>(null)
-const name = ref(localStorage.getItem('race-to-the-bottom:display-name') || '')
+const name = ref((localStorage.getItem('race-to-the-bottom:display-name') || '').slice(0, 14))
 async function confirmAction() { if (confirmation.value) await store.action(confirmation.value); confirmation.value = null }
 async function create() { localStorage.setItem('race-to-the-bottom:display-name', name.value.trim()); await store.hubAction('create-room',{name:name.value}) }
 </script>
 <template>
   <main class="stack management-screen">
     <div><p class="eyebrow">Лидер комнаты {{ store.roomCode }}</p><h1>Управление</h1></div>
-    <form v-if="!store.hasRoom" class="card stack" @submit.prevent="create"><h2>Новое лобби</h2><label class="field"><span>Ваше имя в игре</span><input v-model="name" maxlength="24" required autocomplete="nickname"></label><button class="btn btn--primary" :disabled="store.busy || !name.trim()">Создать лобби</button></form>
+    <form v-if="!store.hasRoom" class="card stack" @submit.prevent="create"><h2>Новое лобби</h2><label class="field"><span>Ваше имя в игре</span><input v-model="name" maxlength="14" required autocomplete="nickname"></label><button class="btn btn--primary" :disabled="store.busy || !name.trim()">Создать лобби</button></form>
     <section v-else-if="store.isMain" class="card stack">
       <p class="eyebrow">Код комнаты</p><h2>{{ store.roomCode }}</h2>
       <template v-if="!confirmation">

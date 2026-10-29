@@ -4,7 +4,7 @@ import { boardScenarios, playerScenarios } from './scenarios'
 
 const devices = [
   { id: 'iphone', label: 'iPhone', width: 393, height: 852, kind: 'player' },
-  { id: 'android', label: 'Android · realme C55', width: 360, height: 800, kind: 'player' },
+  { id: 'android', label: 'Android', width: 360, height: 800, kind: 'player' },
   { id: 'ipad', label: 'iPad', width: 768, height: 1024, kind: 'player' },
   { id: 'tv', label: 'ТВ', width: 960, height: 540, kind: 'board' },
   { id: 'desktop', label: 'Десктоп', width: 1440, height: 900, kind: 'board' },
