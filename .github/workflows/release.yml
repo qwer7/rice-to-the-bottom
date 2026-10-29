@@ -53,8 +53,7 @@ jobs:
     needs: [check, database]
     if: >-
       github.event_name != 'pull_request' &&
-      github.ref == 'refs/heads/main' &&
-      vars.DEPLOY_ENABLED == 'true'
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -65,6 +64,7 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
       MIGRATION_BASELINE_VERIFIED: ${{ vars.MIGRATION_BASELINE_VERIFIED }}
+      DEPLOY_ENABLED: ${{ vars.DEPLOY_ENABLED }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -73,6 +73,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$DEPLOY_ENABLED" != 'true' ]]; then
+            echo '::error::Production release is disabled. Vercel must not promote this commit.'
+            exit 1
+          fi
           for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; do
             if [[ -z "${!name}" ]]; then
               echo "::error::Missing GitHub configuration: $name"
