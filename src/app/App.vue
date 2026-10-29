@@ -10,6 +10,7 @@ import { useGameStore } from '@/stores/gameStore'
 const store = useGameStore()
 const { phone, tv:tvMode } = useDisplayMode()
 onMounted(async () => {
+  if (location.pathname.replace(/\/$/, '') === '/ux/preview') return
   if (tvMode) { await store.openDisplay(); store.restoring = false; return }
   await store.restore()
   if (phone.value) {
