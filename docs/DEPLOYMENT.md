@@ -2,7 +2,7 @@
 
 Основной сайт: [race-to-the-bottom.vercel.app](https://race-to-the-bottom.vercel.app/). Доска для телевизора: [режим ТВ](https://race-to-the-bottom.vercel.app/?screen=tv). Сайт работает с существующим проектом Supabase `iqtaucnbzxwrpoaohtkx`: база, Auth, Realtime и игровые функции остаются там. APK нужно обновить отдельно, см. [ANDROID_TV.md](ANDROID_TV.md).
 
-На 29 октября 2026 сайт опубликован через Vercel Drop; создание лобби и подключение игрока проверены. Настройка автоматического выпуска ещё выполняется. **Не считайте автопубликацию готовой**, пока в Vercel не включены сборки и обязательная проверка успешного выпуска Supabase.
+29 октября 2026 проверен автоматический выпуск коммита `05dfa61`: Vercel дождался проверок и публикации Supabase, затем назначил основной адрес. Создание тестового лобби и подключение игрока проверены; полная партия и установка нового APK на физический ТВ ещё не проверены.
 
 ## Разработка
 
@@ -14,7 +14,7 @@
 
 GitHub Actions в [release.yml](../.github/workflows/release.yml) проверяет сборку и миграции на временной базе. На `main` он применяет новые миграции и выпускает Edge Functions в Supabase; если `DEPLOY_ENABLED` не равен `true`, выпуск завершается ошибкой и не должен разрешить публикацию сайта. GitHub хранит `SUPABASE_ACCESS_TOKEN` и `SUPABASE_DB_PASSWORD` как secrets, а `SUPABASE_PROJECT_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `MIGRATION_BASELINE_VERIFIED` и `DEPLOY_ENABLED` как repository variables.
 
-Vercel подключён к репозиторию `qwer7/rice-to-the-bottom`; в production настроены публичные `VITE_SUPABASE_URL` и `VITE_SUPABASE_PUBLISHABLE_KEY`, тип проекта — Vite. Автоматическая сборка временно отключена на время настройки: до её включения нужно настроить Deployment Check для успешного job `Publish Supabase`, а также убедиться, что выпуск клиента не происходит при ошибке backend. Требуется проверка реального выпуска после включения.
+Vercel подключён к репозиторию `qwer7/rice-to-the-bottom`; в production настроены публичные `VITE_SUPABASE_URL` и `VITE_SUPABASE_PUBLISHABLE_KEY`, тип проекта — Vite, Node.js 22. Сборки включены только для production. Три блокирующие Deployment Checks требуют успешного выполнения jobs `Tests and frontend build`, `Validate migrations on a disposable database` и `Publish Supabase` для того же коммита, прежде чем назначить сайту основной адрес. При переименовании jobs необходимо согласованно обновить настройки Vercel.
 
 Ручной запасной путь: выполнить тесты и сборку, затем загрузить содержимое `dist/` в существующий проект Vercel. Это обновляет только сайт, не БД и функции. Переменные `VITE_*` фиксируются при сборке; после их изменения требуется новая сборка.
 
