@@ -27,7 +27,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.ConsoleMessage;
 
 public final class MainActivity extends Activity {
-    private static final String APP_HOST = "race-to-the-bottom-36n.pages.dev";
+    private static final String APP_HOST = "race-to-the-bottom.vercel.app";
     private static final String SITE = "https://" + APP_HOST + "/";
     private WebView web;
     private String currentUrl;
@@ -43,7 +43,7 @@ public final class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        diagnostic("App 1.6 started");
+        diagnostic("App 1.7 started");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         immersive();
         openBoard();
