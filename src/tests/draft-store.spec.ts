@@ -102,21 +102,22 @@ describe('Local draft and one turn submission',()=>{
  })
  it('keeps trading and card selection local while preserving the public board',async()=>{
   const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
+  state.players[1].balance = 60
   const snapshot={session:{id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state},playerId:'b',isHost:false,private:own}
   mocked.invoke.mockResolvedValue({data:snapshot,error:null})
   const store=useGameStore(); await store.connect('player','ABC234','Б'); mocked.invoke.mockClear()
   store.buyShare('BLUEWELL'); store.buyShare('BLUEWELL'); store.sellShare('BLUEWELL'); store.buyShare('REDSTONE')
-  expect(mocked.invoke).not.toHaveBeenCalled(); expect(store.me?.balance).toBe(22); expect(store.me?.tradesUsed).toBe(4)
-  expect(store.players[1].balance).toBe(30);expect(store.players[1].portfolio.BLUEWELL).toBe(0)
+  expect(mocked.invoke).not.toHaveBeenCalled(); expect(store.me?.balance).toBe(52); expect(store.me?.tradesUsed).toBe(4)
+  expect(store.players[1].balance).toBe(60);expect(store.players[1].portfolio.BLUEWELL).toBe(0)
   await store.action('end-trading');await store.action('select-card',{cardId:own.hand[0].id});expect(mocked.invoke).not.toHaveBeenCalled()
   expect(store.me?.stage).toBe('influence'); await store.action('finish-turn'); expect(store.me?.stage).toBe('purchase'); await store.action('finish-turn')
   expect(mocked.invoke).toHaveBeenCalledTimes(1)
   expect(mocked.invoke.mock.calls[0][1].body).toMatchObject({action:'submit-turn',turn:{round:1,cardId:own.hand[0].id,trades:[{action:'buy',companyId:'BLUEWELL'},{action:'buy',companyId:'BLUEWELL'},{action:'sell',companyId:'BLUEWELL'},{action:'buy',companyId:'REDSTONE'}]}})
   store.leave()
  })
- it('returns from purchase to market selection when another device exchanges the hand',async()=>{
+ it('returns from purchase to market selection when another device changes the hand',async()=>{
   const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
-  state.players[1].influenceCards=['analyst']
+  state.players[1].influenceCards=['analyst']; state.players[1].balance=60
   const session={id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state}
   mocked.invoke.mockResolvedValue({data:{session,playerId:'b',isHost:false,private:own},error:null})
   const store=useGameStore(); await store.connect('player','ABC234','Б')
@@ -135,15 +136,16 @@ describe('Local draft and one turn submission',()=>{
  })
  it('previews purchase and cancellation privately, including when returning to the market card',async()=>{
   const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!
+  state.players[1].balance = 60
   const session={id:'room',code:'ABC234',host_user_id:'host',version:1,status:'active',state}
   mocked.invoke.mockResolvedValue({data:{session,playerId:'b',isHost:false,private:own},error:null})
   const store=useGameStore(); await store.connect('player','ABC234','Б')
   await store.action('end-trading'); await store.action('select-card',{cardId:own.hand[0].id}); await store.action('finish-turn')
   await store.action('choose-purchase',{purchase:'broker'})
-  expect(store.me?.balance).toBe(10); expect(totalCapital(store.me!,store.companies)).toBe(10)
-  expect(store.players[1].balance).toBe(30); expect(store.game?.players[1].balance).toBe(30)
+  expect(store.me?.balance).toBe(40); expect(totalCapital(store.me!,store.companies)).toBe(40)
+  expect(store.players[1].balance).toBe(60); expect(store.game?.players[1].balance).toBe(60)
   await store.action('back-to-influence'); await store.action('finish-turn'); expect(store.me?.stage).toBe('purchase')
-  await store.action('choose-purchase',{purchase:null}); expect(store.me?.balance).toBe(30); expect(totalCapital(store.me!,store.companies)).toBe(30); expect(store.players[1].balance).toBe(30)
+  await store.action('choose-purchase',{purchase:null}); expect(store.me?.balance).toBe(60); expect(totalCapital(store.me!,store.companies)).toBe(60); expect(store.players[1].balance).toBe(60)
   store.leave()
  })
 

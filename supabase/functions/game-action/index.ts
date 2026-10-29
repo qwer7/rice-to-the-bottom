@@ -1,4 +1,4 @@
-import { createLobby, submitTurn, exchangeCard, exchangeHand, nextRound, startGame, resetGame, createPrivateState, type GameState, type PrivatePlayers, type Turn } from '../_shared/game.ts'
+import { createLobby, submitTurn, exchangeCard, nextRound, startGame, resetGame, createPrivateState, type GameState, type PrivatePlayers, type Turn } from '../_shared/game.ts'
 import { context, cors, response, snapshot, message } from '../_shared/api.ts'
 
 Deno.serve(async request => {
@@ -42,11 +42,11 @@ Deno.serve(async request => {
         } else status = 'closed'
       } else {
         if (!playerId || !privatePlayers[playerId]) throw new Error('Вы не участвуете в этой партии')
-        if (action === 'exchange-card' || action === 'exchange-hand') {
+        if (action === 'exchange-card') {
           if (round !== state.round) throw new Error('Раунд уже завершён')
           const own = privatePlayers[playerId]
           own.selectedCardId = own.hand.some(c => c.id === selectedCardId) ? selectedCardId : null
-          privatePlayers[playerId] = action === 'exchange-hand' ? exchangeHand(state, playerId, own) : exchangeCard(state, playerId, own, cardId)
+          privatePlayers[playerId] = exchangeCard(state, playerId, own, cardId)
         } else if (action === 'submit-turn') ({ state, privatePlayers } = submitTurn(state, playerId, privatePlayers, turn as Turn))
         else throw new Error('Неизвестное игровое действие')
       }

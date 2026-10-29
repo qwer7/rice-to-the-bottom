@@ -13,7 +13,8 @@ const armedCardId = ref<string | null>(null)
 const armedCard = computed(() => hand.value.find(c => c.id === armedCardId.value))
 const tableZone = ref<HTMLElement | null>(null)
 const exchangeZone = ref<HTMLElement | null>(null)
-const canExchange = computed(() => !!store.ownCards && !store.busy && !store.ownCards.exchanged && store.ownCards.exchangesUsed < 5)
+const hasAnalyst = computed(() => store.me?.influenceCards?.includes('analyst') ?? false)
+const canExchange = computed(() => !!store.ownCards && !store.busy && !store.ownCards.exchanged && (hasAnalyst.value || store.ownCards.exchangesUsed < 5))
 const drag = ref<{cardId:string;x:number;y:number;width:number;height:number;offsetX:number;offsetY:number} | null>(null)
 const draggingCard = computed(() => hand.value.find(c => c.id === drag.value?.cardId))
 const dropTarget = ref<'table' | 'exchange' | null>(null)
@@ -83,7 +84,7 @@ function pointerCancel(event: PointerEvent) { if (gesture?.id === event.pointerI
 </script>
 <template>
   <section class="stack influence-picker">
-    <div class="section-heading stage-heading"><div class="stage-heading__title"><p class="eyebrow">2/3</p><h2>Рыночная карта</h2></div><div class="stage-actions"><span class="badge">Обмены {{ store.ownCards?.exchangesUsed ?? 0 }}/5</span></div></div>
+    <div class="section-heading stage-heading"><div class="stage-heading__title"><p class="eyebrow">2/3</p><h2>Рыночная карта</h2></div><div class="stage-actions"><span class="badge">{{ hasAnalyst ? 'Обмен или 3$' : `Обмены ${store.ownCards?.exchangesUsed ?? 0}/5` }}</span></div></div>
     <div ref="tableZone" class="table-slot" :class="{ 'table-slot--filled': selected, 'is-drop-target': dropTarget === 'table', 'is-drop-available': mobile && armedCard }">
       <div class="table-slot__heading"><p v-if="!selected" class="eyebrow">На столе</p><div class="table-slot__actions"><button v-if="mobile && armedCard" class="btn btn--primary zone-play" :disabled="store.busy" @click="useCard('table')">Выложить</button><button v-if="selected" class="btn btn--small cancel-card" :disabled="store.busy" @click="store.action('unselect-card')">Отменить</button></div></div>
       <div v-if="selected" class="table-slot__played"><span class="table-slot__vertical-label">На столе</span><InfluenceCard :card="selected" class="table-influence" /></div>
@@ -91,12 +92,11 @@ function pointerCancel(event: PointerEvent) { if (gesture?.id === event.pointerI
     <div class="hand-grid" :class="{ 'has-armed-card': mobile && armedCard }">
       <article v-for="card in hand" :key="card.id" class="hand-item" :style="cardTheme(card)" :class="{ 'is-armed': mobile && armedCardId === card.id, 'is-dragging': drag?.cardId === card.id }" :role="mobile ? 'button' : undefined" :tabindex="mobile ? 0 : undefined" :aria-pressed="mobile ? armedCardId === card.id : undefined" :aria-disabled="mobile ? store.busy : undefined" :aria-label="mobile ? `Выбрать карту ${card.id}` : undefined" @click="clickCard(card.id)" @keydown.enter.self.prevent="armCard(card.id)" @keydown.space.self.prevent="armCard(card.id)" @pointerdown="pointerDown($event,card.id)" @pointermove="pointerMove" @pointerup="pointerUp" @pointercancel="pointerCancel" @contextmenu="mobile && $event.preventDefault()">
         <InfluenceCard :card="card" />
-        <div class="hand-item__actions"><button class="btn btn--primary play-card" :aria-label="`Выложить карту ${card.id}`" :disabled="store.busy" @click="store.action('select-card', { cardId: card.id })">Выложить</button><button class="btn exchange-card" :aria-label="`Обменять карту ${card.id}`" title="Обменять карту" :disabled="store.busy || store.ownCards?.exchanged || (store.ownCards?.exchangesUsed ?? 0) >= 5" @click="store.action('exchange-card', { cardId: card.id })"><span aria-hidden="true">↻</span><span class="exchange-card__label">Обменять</span></button></div>
+        <div class="hand-item__actions"><button class="btn btn--primary play-card" :aria-label="`Выложить карту ${card.id}`" :disabled="store.busy" @click="store.action('select-card', { cardId: card.id })">Выложить</button><button class="btn exchange-card" :aria-label="`Обменять карту ${card.id}`" title="Обменять карту" :disabled="!canExchange" @click="store.action('exchange-card', { cardId: card.id })"><span aria-hidden="true">↻</span><span class="exchange-card__label">Обменять</span></button></div>
       </article>
     </div>
     <div v-if="mobile && (armedCard || drag)" ref="exchangeZone" class="table-slot exchange-slot" :class="{ 'is-drop-target': dropTarget === 'exchange', 'is-drop-available': armedCard && canExchange, 'is-unavailable': !canExchange }"><div class="table-slot__heading"><p class="eyebrow">Обмен карты</p><button class="btn zone-exchange" :disabled="!armedCard || !canExchange" @click="useCard('exchange')">Обменять карту</button></div></div>
-    <button v-if="store.me?.influenceCards?.includes('analyst')" class="btn btn--block" :disabled="!canExchange" @click="store.action('exchange-hand')">Обменять всю руку</button>
-    <button class="btn btn--primary btn--block finish-turn" :disabled="store.busy || !selected" @click="store.action('finish-turn')">{{ store.busy ? 'Сохраняем…' : (store.me && store.availableForPurchase >= ((store.me.influenceCards ?? []).length === 3 ? 30 : store.influenceCardPrice) ? 'Перейти к покупке карты' : 'Закончить ход') }}</button>
+    <button class="btn btn--primary btn--block finish-turn" :disabled="store.busy || !selected" @click="store.action('finish-turn')">{{ store.busy ? 'Сохраняем…' : (store.canPurchase ? 'Перейти к покупке карты' : 'Закончить ход') }}</button>
     <div class="influence-picker__back"><button class="btn btn--block" :disabled="store.busy" @click="store.action('back-to-trading')"><span aria-hidden="true">←</span> Вернуться</button></div>
 
   </section>

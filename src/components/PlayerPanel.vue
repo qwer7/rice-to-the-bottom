@@ -14,8 +14,14 @@ const store = useGameStore()
 const influenceSlots = computed(() => Array.from({ length: 3 }, (_, i) => store.me?.influenceCards?.[i]))
 const selectedInfluence = ref<InfluenceType | null>(null)
 function toggleInfluence(card: InfluenceType) { selectedInfluence.value = selectedInfluence.value === card ? null : card }
-watch(() => [store.phase, store.me?.stage, store.me?.influenceCards?.length, store.availableForPurchase, store.draft?.purchase] as const, ([phase, stage, cards, available, purchase]) => {
-  if (phase === 'playing' && stage === 'purchase' && cards === 3 && available >= 30 && purchase !== 'victory') void store.action('choose-purchase', { purchase: 'victory' })
+watch(() => [store.phase, store.me?.stage, store.me?.influenceCards?.length, store.canPurchase, store.draft?.purchase] as const, ([phase, stage, cards, canPurchase, purchase]) => {
+  if (phase !== 'playing' || stage !== 'purchase') return
+  if (!canPurchase) {
+    if (purchase) void store.action('choose-purchase', { purchase: null })
+    void store.action('back-to-influence')
+    return
+  }
+  if (cards === 3 && purchase !== 'victory') void store.action('choose-purchase', { purchase: 'victory' })
 }, { immediate: true })
 </script>
 <template>
@@ -34,7 +40,7 @@ watch(() => [store.phase, store.me?.stage, store.me?.influenceCards?.length, sto
       <section v-else-if="store.phase === 'playing' && store.me.stage === 'purchase'" class="stack influence-purchase">
         <div class="purchase-heading"><h2>{{ (store.me.influenceCards ?? []).length === 3 ? 'Покупка карты победы' : 'Покупка карты влияния' }}</h2></div>
         <template v-if="(store.me.influenceCards ?? []).length < 3"><div class="influence-purchase-grid"><button v-for="id in INFLUENCE_TYPES" :key="id" class="influence-purchase-card" :class="{ 'is-selected': store.draft?.purchase === id, 'is-owned': (store.me.influenceCards ?? []).includes(id) }" :disabled="(store.me.influenceCards ?? []).includes(id) || store.availableForPurchase < store.influenceCardPrice || store.busy" :aria-pressed="store.draft?.purchase === id" :aria-label="`${INFLUENCE_INFO[id].name}${(store.me.influenceCards ?? []).includes(id) ? ' — уже куплена' : ` — $${store.influenceCardPrice}`}`" @click="store.action('choose-purchase', { purchase: store.draft?.purchase === id ? null : id })"><span class="influence-purchase-card__icon" aria-hidden="true">{{ influenceIcons[id] }}</span><span>{{ INFLUENCE_INFO[id].name }}</span></button></div><p class="influence-purchase-description" role="status">{{ store.draft?.purchase && store.draft.purchase !== 'victory' ? INFLUENCE_INFO[store.draft.purchase].description : `Карта влияния стоит $${store.influenceCardPrice}` }}</p></template>
-        <button v-else class="victory-purchase-card" :class="{ 'is-selected': store.draft?.purchase === 'victory' }" :aria-pressed="store.draft?.purchase === 'victory'" :disabled="store.busy || store.availableForPurchase < 30" @click="store.action('choose-purchase', { purchase: 'victory' })"><span class="victory-purchase-card__crown" aria-hidden="true"><VictoryCrown /></span><strong>Карта победы</strong><span class="victory-purchase-card__price">$30</span></button>
+        <button v-else class="victory-purchase-card" :class="{ 'is-selected': store.draft?.purchase === 'victory' }" :aria-pressed="store.draft?.purchase === 'victory'" :disabled="store.busy || store.availableForPurchase < store.victoryCardPrice" @click="store.action('choose-purchase', { purchase: 'victory' })"><span class="victory-purchase-card__crown" aria-hidden="true"><VictoryCrown /></span><strong>Карта победы</strong><span class="victory-purchase-card__price">${{ store.victoryCardPrice }}</span></button>
         <button class="btn btn--primary" :disabled="store.busy" @click="store.action('finish-turn')">{{ store.draft?.purchase === 'victory' ? 'Купить и закончить игру' : store.draft?.purchase ? `Заплатить ${store.influenceCardPrice}$ и закончить ход` : 'Закончить ход' }}</button>
         <div class="influence-purchase__back"><button class="btn btn--block" @click="store.action('back-to-influence')"><span aria-hidden="true">←</span> Вернуться</button></div>
       </section>
@@ -42,6 +48,7 @@ watch(() => [store.phase, store.me?.stage, store.me?.influenceCards?.length, sto
       <div v-else-if="store.phase === 'reveal'" class="waiting-state"><span aria-hidden="true">↗</span><h2>Карты раскрыты</h2><p class="muted">Результат раунда — на доске. {{ store.isMain ? '' : 'Главный игрок запустит следующий раунд.' }}</p></div>
       <div v-else class="waiting-state"><h2>Партия завершена</h2><p class="muted">Итоги и победитель — на доске результатов.</p></div>
     </section>
-    <button v-if="store.isMain && (store.phase === 'reveal' || (store.phase === 'playing' && store.me.stage === 'ready'))" class="btn btn--primary btn--block" :disabled="store.busy || store.phase !== 'reveal'" @click="store.action('continue')">Следующий раунд</button>
+    <button v-if="store.isMain && store.phase === 'finished'" class="btn btn--primary btn--block" @click="store.setRole('board')">Посмотреть итоги</button>
+    <button v-if="store.isMain && (store.phase === 'reveal' || (store.phase === 'playing' && store.me.stage === 'ready'))" class="btn btn--primary btn--block" :disabled="store.busy || store.phase !== 'reveal'" @click="store.action('continue')">{{ store.winnerIds?.length ? 'Посмотреть итоги' : 'Следующий раунд' }}</button>
   </div>
 </template>

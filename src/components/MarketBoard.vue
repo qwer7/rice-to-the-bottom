@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { INFLUENCE_INFO, INFLUENCE_TYPES, type InfluenceType } from '../../supabase/functions/_shared/game'
+import { INFLUENCE_INFO, INFLUENCE_TYPES, dividendAmount, type InfluenceType } from '../../supabase/functions/_shared/game'
 import CompanyCard from './CompanyCard.vue'
 import VictoryCrown from './VictoryCrown.vue'
 import InfluenceCard from './InfluenceCard.vue'
@@ -18,7 +18,7 @@ const shortPlayerName = (name: string) => { const chars = Array.from(name); retu
 function roundMoney(playerId: string) {
   const player = store.players.find(item => item.id === playerId)
   const taxes = (store.game?.lastReveal?.moneyChanges ?? []).filter(change => change.playerId === playerId)
-  const dividends = store.phase === 'reveal' && player?.influenceCards?.includes('dividends') ? Math.min(5, COMPANY_IDS.reduce((sum, id) => sum + player.portfolio[id], 0)) : 0
+  const dividends = store.phase === 'reveal' && !store.winnerIds?.length && player?.influenceCards?.includes('dividends') && store.game ? dividendAmount(store.game, player) : 0
   const positive = taxes.reduce((sum, change) => sum + Math.max(change.amount, 0), 0) + dividends
   const negative = taxes.reduce((sum, change) => sum + Math.min(change.amount, 0), 0)
   return { positive, negative, total: positive + negative, dividends, taxes, hasCards: !!player?.influenceCards?.length }

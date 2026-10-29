@@ -4,7 +4,7 @@ export const playerScenarios = [
   ['influence-selected', 'Рыночная карта · выбрана'], ['influence-exchanged', 'Рыночная карта · обмен использован'],
   ['influence-limit', 'Рыночная карта · все обмены использованы'], ['purchase', 'Покупка карты влияния'], ['purchase-selected', 'Покупка · карта выбрана'],
   ['victory-purchase', 'Покупка карты победы'], ['ready', 'Ход завершён'],
-  ['reveal', 'Раскрытие карт'], ['finished', 'Партия завершена'],
+  ['reveal', 'Раскрытие карт'], ['reveal-victory', 'Раскрытие · победный ход'], ['finished', 'Партия завершена'],
   ['manage-lobby', 'Управление · лобби'], ['manage-playing', 'Управление · игра'], ['manage-finished', 'Управление · завершение'],
 ] as const
 export const boardScenarios = [

@@ -3,20 +3,22 @@ export const COMPANY_IDS: CompanyId[] = ['REDSTONE', 'BLUEWELL', 'GOLDSPARK']
 export const DEFAULT_CONFIG = { minPrice: 1, maxPrice: 9, initialPrice: 4, initialBalance: 30, totalRounds: 8, minPlayers: 2, maxPlayers: 5, maxTrades: 4, handSize: 4, maxShares: 5, maxExchanges: 5 }
 export type GameConfig = typeof DEFAULT_CONFIG & { influenceCardPrice?: number }
 export const DEFAULT_INFLUENCE_CARD_PRICE = 20
-export function influenceCardPrice(state: GameState): number {
-  const price = state.config.influenceCardPrice
-  return typeof price === 'number' && Number.isInteger(price) && price >= 0 ? price : DEFAULT_INFLUENCE_CARD_PRICE
+export const VICTORY_CARD_PRICE = 50
+export function influenceCardPrice(state: GameState, player?: Player): number {
+  const base = state.config.influenceCardPrice
+  const startingPrice = typeof base === 'number' && Number.isInteger(base) && base >= 0 ? base : DEFAULT_INFLUENCE_CARD_PRICE
+  return startingPrice + 10 * Math.min(player?.influenceCards?.length ?? 0, 2)
 }
 export type Card = { id: string; kind: 'pair'; up: CompanyId; down: CompanyId; gain: 1 | 2; loss: 1 | 2 } | { id: string; kind: 'single'; company: CompanyId; delta: 3 | -3 } | { id: string; kind: 'swap'; a: CompanyId; b: CompanyId }
 export interface TradeOrder { companyId: CompanyId; action: 'buy' | 'sell' }
 export const INFLUENCE_TYPES = ['dividends', 'broker', 'analyst', 'tax', 'theft', 'lucky'] as const
 export type InfluenceType = typeof INFLUENCE_TYPES[number]
 export type Purchase = InfluenceType | 'victory'
-export const INFLUENCE_INFO: Record<InfluenceType, { name: string; description: string }> = { dividends: {name:'Дивиденды', description:'В начале раунда $1 за акцию, максимум $5.'}, broker:{name:'Брокер', description:'До пяти сделок за раунд.'}, analyst:{name:'Аналитик', description:'Можно обменять всю руку за один обмен.'}, tax:{name:'Налог', description:'Однократно: соперники платят до $10; владелец получает до $5.'}, theft:{name:'Кража', description:'Однократно: забрать по акции у соперников, получить самую дорогую.'}, lucky:{name:'Везунчик', description:'При продаже акции ценой до $5 получить дополнительно $1.'} }
+export const INFLUENCE_INFO: Record<InfluenceType, { name: string; description: string }> = { dividends: {name:'Дивиденды', description:'В начале раунда $1 за каждую акцию дороже $5.'}, broker:{name:'Брокер', description:'До пяти сделок за раунд.'}, analyst:{name:'Аналитик', description:'Обмен карты каждый ход или $3, если обмен не использован.'}, tax:{name:'Налог', description:'Однократно: соперники платят половину баланса; владелец получает наибольший платёж.'}, theft:{name:'Кража', description:'Однократно: по одной акции каждого цвета у соперников; владелец получает по одной каждого цвета.'}, lucky:{name:'Везунчик', description:'При продаже любой акции получить дополнительно $1.'} }
 export interface Turn { round: number; id: string; trades: TradeOrder[]; cardId: string; purchase?: Purchase | null }
 export interface Player { id: string; name: string; balance: number; portfolio: Record<CompanyId, number>; stage: 'trading' | 'influence' | 'purchase' | 'ready'; tradesUsed: number; influenceCards?: InfluenceType[]; victoryCard?: boolean }
 export interface CompanyState { id: CompanyId; price: number }
-export interface MoneyChange { playerId: string; source: 'tax'; amount: number }
+export interface MoneyChange { playerId: string; source: 'tax' | 'lucky' | 'analyst'; amount: number }
 export interface Reveal { moneyChanges?: MoneyChange[]; round: number; cards: Array<{ playerId: string; card: Card }>; pricesBefore: Record<CompanyId, number>; pricesAfter: Record<CompanyId, number>; deltas: Record<CompanyId, number>; purchases?: Array<{ playerId: string; purchase: Purchase }>; effects?: string[] }
 export interface GameState { schemaVersion: 3; matchId: string; lobbyMode?: 'first-player'; config: GameConfig; players: Player[]; companies: CompanyState[]; round: number; phase: 'lobby' | 'playing' | 'reveal' | 'finished'; lastReveal: Reveal | null; winnerIds: string[] | null; dividends?: Array<{ playerId: string; amount: number }> }
 export interface PrivateState { hand: Card[]; deck: Card[]; discard: Card[]; selectedCardId: string | null; exchanged: boolean; exchangesUsed: number; pending: Turn | null; lastSubmissionId: string | null }
@@ -92,7 +94,8 @@ function requireStage(state: GameState, playerId: string, stage: Player['stage']
 }
 export const hasInfluence = (player: Player, type: InfluenceType) => (player.influenceCards ?? []).includes(type)
 export const tradeLimit = (state: GameState, player: Player) => state.config.maxTrades + (hasInfluence(player, 'broker') ? 1 : 0)
-export const salePrice = (player: Player, price: number) => price + (price <= 5 && hasInfluence(player, 'lucky') ? 1 : 0)
+export const salePrice = (player: Player, price: number) => price + (hasInfluence(player, 'lucky') ? 1 : 0)
+export const dividendAmount = (state: GameState, player: Player) => COMPANY_IDS.reduce((sum, id) => sum + (requireCompany(state, id).price > 5 ? player.portfolio[id] : 0), 0)
 export function canBuy(state: GameState, playerId: string, id: CompanyId): boolean {
   const p = requirePlayer(state, playerId)
   return state.phase === 'playing' && p.stage === 'trading' && p.tradesUsed < tradeLimit(state, p) && p.balance >= requireCompany(state, id).price && p.portfolio[id] < state.config.maxShares
@@ -123,7 +126,7 @@ export function selectCard(state: GameState, playerId: string, privateState: Pri
 }
 export function exchangeCard(state: GameState, playerId: string, privateState: PrivateState, cardId: string, random: () => number = Math.random): PrivateState {
   if (state.phase !== 'playing' || requirePlayer(state, playerId).stage === 'ready') throw new Error('Ход уже завершён')
-  if (privateState.exchangesUsed >= state.config.maxExchanges) throw new Error('Все пять обменов за партию использованы')
+  if (!hasInfluence(requirePlayer(state, playerId), 'analyst') && privateState.exchangesUsed >= state.config.maxExchanges) throw new Error('Все пять обменов за партию использованы')
   if (privateState.exchanged) throw new Error('Обмен уже использован в этом раунде')
   if (privateState.selectedCardId === cardId) throw new Error('Можно обменять только карту на руке')
   const index = privateState.hand.findIndex(c => c.id === cardId)
@@ -134,24 +137,13 @@ export function exchangeCard(state: GameState, playerId: string, privateState: P
   return next
 }
 
-export function exchangeHand(state: GameState, playerId: string, privateState: PrivateState, random: () => number = Math.random): PrivateState {
-  const player = requirePlayer(state, playerId)
-  if (state.phase !== 'playing' || player.stage === 'ready') throw new Error('Ход уже завершён')
-  if (!hasInfluence(player, 'analyst')) throw new Error('Для полного обмена нужен Аналитик')
-  if (privateState.exchangesUsed >= state.config.maxExchanges) throw new Error('Все пять обменов за партию использованы')
-  if (privateState.exchanged) throw new Error('Обмен уже использован в этом раунде')
-  const next = clone(privateState); const old = next.hand.splice(0)
-  next.selectedCardId = null
-  for (let i = 0; i < state.config.handSize; i++) next.hand.push(draw(next, random))
-  next.discard.push(...old); next.exchanged = true; next.exchangesUsed++
-  return next
-}
-export function validatePurchase(player: Player, purchase: unknown, price = DEFAULT_INFLUENCE_CARD_PRICE): void {
+export function validatePurchase(player: Player, purchase: unknown, price = DEFAULT_INFLUENCE_CARD_PRICE, capital = Number.POSITIVE_INFINITY): void {
   if (purchase == null) return
   const owned = player.influenceCards ?? []
+  if (capital <= 50) throw new Error('Для покупки капитал должен быть больше $50')
   if (purchase === 'victory') {
     if (owned.length !== 3 || player.victoryCard) throw new Error('Для карты победы нужны три карты влияния')
-    if (player.balance < 30) throw new Error('Недостаточно денег для карты победы')
+    if (player.balance < VICTORY_CARD_PRICE) throw new Error('Недостаточно денег для карты победы')
   } else {
     if (typeof purchase !== 'string' || !INFLUENCE_TYPES.includes(purchase as InfluenceType)) throw new Error('Неизвестная покупка')
     if (owned.length >= 3 || owned.includes(purchase as InfluenceType)) throw new Error('Эту карту влияния купить нельзя')
@@ -186,26 +178,45 @@ export function finishTurn(state: GameState, playerId: string, privatePlayers: P
   const purchases = next.players.flatMap(p => { const purchase = privatePlayers[p.id]?.pending?.purchase; return purchase ? [{ playerId: p.id, purchase }] : [] })
   const effects: string[] = []
   const moneyChanges: MoneyChange[] = []
+  for (const player of next.players) {
+    const turn = privatePlayers[player.id]?.pending
+    if (turn && hasInfluence(player, 'analyst') && turn.purchase !== 'analyst' && !privatePlayers[player.id].exchanged) {
+      player.balance += 3
+      moneyChanges.push({ playerId: player.id, source: 'analyst', amount: 3 })
+      effects.push(`${player.name}: Аналитик +$3`)
+    }
+    if (turn && hasInfluence(player, 'lucky') && turn.purchase !== 'lucky') {
+      const bonus = turn.trades.filter(order => order.action === 'sell').length
+      if (bonus) moneyChanges.push({ playerId: player.id, source: 'lucky', amount: bonus })
+    }
+  }
   for (const {playerId, purchase} of purchases) {
     const owner = requirePlayer(next, playerId); const opponents = next.players.filter(p => p.id !== playerId)
     if (purchase === 'tax') {
-      let sum = 0
-      for (const p of opponents) { const paid = Math.min(10, p.balance); p.balance -= paid; sum += paid; moneyChanges.push({ playerId: p.id, source: 'tax', amount: -paid }); effects.push(`${p.name}: налог −$${paid}`) }
-      const payout = Math.max(0, Math.ceil(sum / opponents.length - 5)); owner.balance += payout; moneyChanges.push({ playerId: owner.id, source: 'tax', amount: payout }); effects.push(`${owner.name}: выплата налога +$${payout}`)
+      let payout = 0
+      for (const p of opponents) {
+        const paid = Math.floor(p.balance / 2)
+        p.balance -= paid; payout = Math.max(payout, paid)
+        moneyChanges.push({ playerId: p.id, source: 'tax', amount: -paid })
+        effects.push(`${p.name}: налог −$${paid}`)
+      }
+      owner.balance += payout; moneyChanges.push({ playerId: owner.id, source: 'tax', amount: payout })
+      effects.push(`${owner.name}: выплата налога +$${payout}`)
     }
     if (purchase === 'theft') {
-      const eligible = COMPANY_IDS.filter(id => owner.portfolio[id] < next.config.maxShares).sort((a,b) => after[b] - after[a])
-      const stolen: Array<{ player: Player; company: CompanyId }> = []
-      for (const p of opponents) { const company = eligible.find(id => p.portfolio[id] > 0); if (company) { p.portfolio[company]--; stolen.push({player:p,company}) } }
-      const received = stolen.reduce<typeof stolen[number] | null>((best, item) => !best || after[item.company] > after[best.company] || (after[item.company] === after[best.company] && COMPANY_IDS.indexOf(item.company) < COMPANY_IDS.indexOf(best.company)) ? item : best, null)
-      if (received) owner.portfolio[received.company]++
-      for (const item of stolen) effects.push(`${owner.name}: у ${item.player.name} украдена ${item.company} — ${item === received ? 'получена' : 'отправлена в банк'}`)
-      if (!stolen.length) effects.push(`${owner.name}: подходящих акций для кражи нет`)
+      for (const company of COMPANY_IDS) {
+        const victims = opponents.filter(player => player.portfolio[company] > 0)
+        if (!victims.length) continue
+        for (const player of victims) player.portfolio[company]--
+        const received = owner.portfolio[company] < next.config.maxShares
+        if (received) owner.portfolio[company]++
+        effects.push(received ? `${owner.name}: получена акция ${company}; остальные изъятые акции сброшены` : `${owner.name}: лимит ${company}, все изъятые акции сброшены`)
+      }
     }
   }
   next.lastReveal = { round: next.round, cards, pricesBefore: before, pricesAfter: after, deltas, purchases, effects, moneyChanges }
   next.winnerIds = next.players.filter(p => p.victoryCard).map(p => p.id)
-  next.phase = next.winnerIds.length ? 'finished' : 'reveal'
+  next.phase = 'reveal'
   if (!next.winnerIds.length) next.winnerIds = null
   return { state: next, privatePlayers: privateNext }
 }
@@ -218,10 +229,11 @@ export function determineWinners(state: GameState): string[] {
 export function nextRound(state: GameState, privatePlayers: PrivatePlayers): { state: GameState; privatePlayers: PrivatePlayers } {
   if (state.phase !== 'reveal') throw new Error('Сначала все игроки должны завершить ход')
   const next = clone(state); const privateNext = clone(privatePlayers)
+  if (next.winnerIds?.length) { next.phase = 'finished'; return { state: next, privatePlayers: privateNext } }
   next.round++; next.phase = 'playing'; next.lastReveal = null; next.dividends = []
   for (const player of next.players) {
     player.stage = 'trading'; player.tradesUsed = 0
-    if (hasInfluence(player, 'dividends')) { const amount = Math.min(5, COMPANY_IDS.reduce((sum,id) => sum + player.portfolio[id], 0)); player.balance += amount; next.dividends!.push({playerId: player.id, amount}) }
+    if (hasInfluence(player, 'dividends')) { const amount = dividendAmount(next, player); player.balance += amount; next.dividends!.push({playerId: player.id, amount}) }
     const own = privateNext[player.id]; own.exchanged = false; own.selectedCardId = null; own.pending = null
     while (own.hand.length < next.config.handSize) own.hand.push(draw(own))
   }
@@ -251,7 +263,7 @@ export function submitTurn(state: GameState, playerId: string, privatePlayers: P
   if (turn.round !== state.round) throw new Error('Этот раунд уже завершён')
   requireStage(state, playerId, 'trading')
   const preview = previewTurn(state, playerId, turn.trades)
-  validatePurchase(requirePlayer(preview, playerId), turn.purchase, influenceCardPrice(preview))
+  validatePurchase(requirePlayer(preview, playerId), turn.purchase, influenceCardPrice(preview, requirePlayer(preview, playerId)), totalCapital(requirePlayer(preview, playerId), preview.companies))
   if (!own?.hand.some(c => c.id === turn.cardId)) throw new Error('Этой карты нет у вас на руке')
   let next = clone(state); let secrets = clone(privatePlayers)
   secrets[playerId].pending = clone(turn); secrets[playerId].lastSubmissionId = turn.id
@@ -268,9 +280,9 @@ export function submitTurn(state: GameState, playerId: string, privatePlayers: P
   }
   for (const player of next.players) {
     const purchase = secrets[player.id].pending?.purchase
-    validatePurchase(player, purchase, influenceCardPrice(next))
-    if (purchase === 'victory') { player.balance -= 30; player.victoryCard = true }
-    else if (purchase) { player.balance -= influenceCardPrice(next); (player.influenceCards ??= []).push(purchase) }
+    validatePurchase(player, purchase, influenceCardPrice(next, player), totalCapital(player, next.companies))
+    if (purchase === 'victory') { player.balance -= VICTORY_CARD_PRICE; player.victoryCard = true }
+    else if (purchase) { player.balance -= influenceCardPrice(next, player); (player.influenceCards ??= []).push(purchase) }
   }
   const last = requirePlayer(next, playerId); last.stage = 'influence'
   return finishTurn(next, playerId, secrets)

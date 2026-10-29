@@ -1,6 +1,6 @@
 import { computed, ref, toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import { addPlayer, canBuy, canSell, createDeck, createDisplayLobby, createLobby, createPrivateState, playerView, startGame, influenceCardPrice as getInfluenceCardPrice, totalCapital, trade, type CompanyId, type PlayerView, type Turn } from '../../supabase/functions/_shared/game'
+import { addPlayer, canBuy, canSell, createDeck, createDisplayLobby, createLobby, createPrivateState, playerView, startGame, influenceCardPrice as getInfluenceCardPrice, VICTORY_CARD_PRICE, totalCapital, trade, type CompanyId, type PlayerView, type Turn } from '../../supabase/functions/_shared/game'
 import { updateMarketHistory } from '@/game/marketHistory'
 
 // Register a store with the same id before mounting the real components. It never
@@ -19,7 +19,7 @@ export const usePreviewStore = defineStore('game', () => {
   if (!['entry', 'lobby', 'empty-lobby', 'manage-lobby', 'playing'].includes(scenario)) {
     initial.round = 3
     initial.companies[0].price = 6; initial.companies[1].price = 3; initial.companies[2].price = 7
-    initial.players.forEach((p, i) => { p.balance = 35 + i * 5; p.portfolio = { REDSTONE: i + 1, BLUEWELL: 3 - i, GOLDSPARK: i }; p.influenceCards = i === 0 ? ['analyst'] : i === 1 ? ['broker', 'lucky'] : [] })
+    initial.players.forEach((p, i) => { p.balance = 45 + i * 5; p.portfolio = { REDSTONE: i + 1, BLUEWELL: 3 - i, GOLDSPARK: i }; p.influenceCards = i === 0 ? ['analyst'] : i === 1 ? ['broker', 'lucky'] : [] })
   }
   if (board && initial.phase !== 'lobby') {
     initial.players[0].influenceCards = ['dividends', 'analyst']
@@ -36,13 +36,14 @@ export const usePreviewStore = defineStore('game', () => {
     initial.lastReveal = { round: 2, cards: [], pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 } }
   }
   if (scenario === 'ready') initial.players[index].stage = 'ready'
-  if (['reveal', 'finished', 'tie', 'manage-finished'].includes(scenario)) {
-    initial.phase = scenario === 'reveal' ? 'reveal' : 'finished'
+  if (['reveal', 'reveal-victory', 'finished', 'tie', 'manage-finished'].includes(scenario)) {
+    initial.phase = scenario === 'reveal' || scenario === 'reveal-victory' ? 'reveal' : 'finished'
     initial.players.forEach(p => { p.stage = 'ready' })
     const deck = createDeck()
     const sampleCards = [deck.find(card => card.kind === 'pair')!, deck.find(card => card.kind === 'single' && card.company === 'GOLDSPARK' && card.delta > 0)!, deck.find(card => card.kind === 'single' && card.delta < 0)!, deck.find(card => card.kind === 'swap')!]
-    initial.lastReveal = { round: 3, cards: initial.players.map((p, i) => ({ playerId: p.id, card: sampleCards[i] })), pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 }, purchases: [{ playerId: 'player-2', purchase: 'broker' }, { playerId: 'player-3', purchase: 'tax' }], effects: [], moneyChanges: [{ playerId: 'player-1', source: 'tax', amount: -10 }, { playerId: 'player-2', source: 'tax', amount: -10 }, { playerId: 'player-4', source: 'tax', amount: -10 }, { playerId: 'player-3', source: 'tax', amount: 5 }] }
-    if (initial.phase === 'finished') initial.winnerIds = scenario === 'tie' ? ['player-1', 'player-2'] : ['player-1']
+    if (board) { initial.players[0].balance = 20; initial.players[1].balance = 20; initial.players[2].balance = 45; initial.players[2].influenceCards = ['tax']; initial.players[3].balance = 25 }
+    initial.lastReveal = { round: 3, cards: initial.players.map((p, i) => ({ playerId: p.id, card: sampleCards[i] })), pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 }, purchases: [{ playerId: 'player-2', purchase: 'broker' }, { playerId: 'player-3', purchase: 'tax' }], effects: [], moneyChanges: [{ playerId: 'player-1', source: 'tax', amount: -20 }, { playerId: 'player-2', source: 'tax', amount: -20 }, { playerId: 'player-4', source: 'tax', amount: -25 }, { playerId: 'player-3', source: 'tax', amount: 25 }, { playerId: 'player-4', source: 'lucky', amount: 2 }, { playerId: 'player-1', source: 'analyst', amount: 3 }] }
+    if (initial.phase === 'finished' || scenario === 'reveal-victory') initial.winnerIds = scenario === 'tie' ? ['player-1', 'player-2'] : ['player-1']
   }
   const game = ref(initial)
   const playerId = `player-${index + 1}`
@@ -50,19 +51,25 @@ export const usePreviewStore = defineStore('game', () => {
   const stage = scenario.startsWith('influence') ? 'influence' : scenario.includes('purchase') ? 'purchase' : 'trading'
   const draft = ref<{round:number;id:string;trades:Turn['trades'];cardId:string;stage:'trading'|'influence'|'purchase';purchase?:Turn['purchase']}>({ round: initial.round, id: 'preview', trades: [], cardId: scenario === 'influence-selected' || scenario.includes('purchase') ? ownCards.value.hand[0].id : '', stage, purchase: scenario === 'purchase-selected' ? 'broker' : null })
   if (scenario === 'trading-empty') initial.players[index].balance = 0
-  if (scenario === 'influence-limit') ownCards.value.exchangesUsed = 5
+  if (scenario === 'influence-limit') { ownCards.value.exchangesUsed = 5; initial.players[index].influenceCards = (initial.players[index].influenceCards ?? []).filter(card => card !== 'analyst') }
   if (scenario === 'influence-exchanged') { ownCards.value.exchanged = true; ownCards.value.exchangesUsed = 2 }
-  if (scenario === 'victory-purchase') initial.players[index].influenceCards = ['analyst', 'broker', 'lucky']
+  if (scenario === 'victory-purchase') { initial.players[index].influenceCards = ['analyst', 'broker', 'lucky']; initial.players[index].balance = 60 }
   if (scenario === 'trading-limit') initial.players[index].tradesUsed = initial.config.maxTrades + (initial.players[index].influenceCards?.includes('broker') ? 1 : 0)
   const role = ref(board ? 'board' : scenario.startsWith('manage-') ? 'manage' : index === 0 ? 'main' : 'player')
   const isMain = ref(index === 0 || scenario.startsWith('manage-'))
   const hasRoom = ref(scenario !== 'entry')
   const hub = ref(board && device === 'tv' ? { isDisplayOwner: true } : null)
   const busy = ref(false), error = ref<string | null>(null)
+  const selectedPurchaseCost = computed(() => {
+    const p = game.value.players.find(player => player.id === playerId)
+    return draft.value.purchase === 'victory' ? VICTORY_CARD_PRICE : draft.value.purchase ? getInfluenceCardPrice(game.value, p) : 0
+  })
   const me = computed(() => {
     const p = game.value.players.find(p => p.id === playerId)
-    return p && game.value.phase === 'playing' && p.stage !== 'ready' ? { ...p, stage: draft.value.stage } : p
+    return p && game.value.phase === 'playing' && p.stage !== 'ready' ? { ...p, balance: p.balance - selectedPurchaseCost.value, stage: draft.value.stage } : p
   })
+  const availableForPurchase = computed(() => (me.value?.balance ?? 0) + selectedPurchaseCost.value)
+  const canPurchase = computed(() => !!me.value && totalCapital(me.value, game.value.companies) + selectedPurchaseCost.value > 50 && availableForPurchase.value >= ((me.value.influenceCards?.length ?? 0) === 3 ? VICTORY_CARD_PRICE : getInfluenceCardPrice(game.value, me.value)))
   const selectedCardId = computed(() => draft.value.cardId || null)
   const marketHistory = computed(() => updateMarketHistory(game.value, null))
   const action = async (name: string, details: Record<string, any> = {}) => {
@@ -72,12 +79,16 @@ export const usePreviewStore = defineStore('game', () => {
     else if (name === 'select-card') draft.value.cardId = details.cardId
     else if (name === 'unselect-card') draft.value.cardId = ''
     else if (name === 'choose-purchase') draft.value.purchase = details.purchase
-    else if (name === 'exchange-card' || name === 'exchange-hand') { ownCards.value.exchanged = true; ownCards.value.exchangesUsed++ }
-    else if (name === 'finish-turn' && draft.value.stage === 'influence' && (me.value?.balance ?? 0) >= ((me.value?.influenceCards?.length ?? 0) === 3 ? 30 : getInfluenceCardPrice(game.value))) draft.value.stage = 'purchase'
+    else if (name === 'exchange-card') { ownCards.value.exchanged = true; ownCards.value.exchangesUsed++ }
+    else if (name === 'finish-turn' && draft.value.stage === 'influence' && canPurchase.value) draft.value.stage = 'purchase'
     else if (name === 'finish-turn') { const p = game.value.players.find(p => p.id === playerId); if (p) p.stage = 'ready' }
     else if (name === 'start') game.value = startGame(toRaw(game.value))
+    else if (name === 'continue' && game.value.phase === 'reveal') {
+      if (game.value.winnerIds?.length) game.value.phase = 'finished'
+      else { game.value.phase = 'playing'; game.value.round++; game.value.players.forEach(player => { player.stage = 'trading' }); draft.value.stage = 'trading' }
+    }
   }
   const tradeHistory: typeof initial[] = []
   function changeTrade(id: CompanyId, kind: 'buy' | 'sell') { try { const next = trade(toRaw(game.value), playerId, id, kind); tradeHistory.push(game.value); game.value = next } catch { /* disabled controls cover invalid trades */ } }
-  return { game, players: computed(() => game.value.players), companies: computed(() => game.value.companies), me, phase: computed(() => game.value.phase), round: computed(() => game.value.round), totalRounds: computed(() => game.value.config.totalRounds), minPrice: computed(() => game.value.config.minPrice), maxPrice: computed(() => game.value.config.maxPrice), roomCode: 'ABC234', winnerIds: computed(() => game.value.winnerIds), ranking: computed(() => game.value.players.map(player => ({ player, capital: totalCapital(player, game.value.companies) })).sort((a,b) => b.capital-a.capital)), hasRoom, hasHub: false, hub, isMain, role, busy, error, restoring: false, restoreFailed: false, connection: scenario === 'connecting' ? 'Подключение…' : scenario === 'offline' ? 'Связь прервана. Повторяем…' : 'На связи', ownCards, draft, selectedCardId, influenceCardPrice: computed(() => getInfluenceCardPrice(game.value)), availableForPurchase: computed(() => me.value?.balance ?? 0), marketHistory, action, setRole: (value: string) => { role.value = value }, exitHub: () => { hasRoom.value = false }, restore: async () => {}, openDisplay: async () => {}, connect: async () => {}, displayAction: async () => {}, hubAction: async () => {}, canBuy: (id: string, company: CompanyId) => canBuy(game.value,id,company), canSell: (id: string, company: CompanyId) => canSell(game.value,id,company), buyShare: (id: CompanyId) => changeTrade(id,'buy'), sellShare: (id: CompanyId) => changeTrade(id,'sell'), undoTrade: () => { const previous = tradeHistory.pop(); if (previous) game.value = previous } }
+  return { game, players: computed(() => game.value.players), companies: computed(() => game.value.companies), me, phase: computed(() => game.value.phase), round: computed(() => game.value.round), totalRounds: computed(() => game.value.config.totalRounds), minPrice: computed(() => game.value.config.minPrice), maxPrice: computed(() => game.value.config.maxPrice), roomCode: 'ABC234', winnerIds: computed(() => game.value.winnerIds), ranking: computed(() => game.value.players.map(player => ({ player, capital: totalCapital(player, game.value.companies) })).sort((a,b) => b.capital-a.capital)), hasRoom, hasHub: false, hub, isMain, role, busy, error, restoring: false, restoreFailed: false, connection: scenario === 'connecting' ? 'Подключение…' : scenario === 'offline' ? 'Связь прервана. Повторяем…' : 'На связи', ownCards, draft, selectedCardId, influenceCardPrice: computed(() => getInfluenceCardPrice(game.value, me.value)), victoryCardPrice: VICTORY_CARD_PRICE, canPurchase, availableForPurchase, marketHistory, action, setRole: (value: string) => { role.value = value }, exitHub: () => { hasRoom.value = false }, restore: async () => {}, openDisplay: async () => {}, connect: async () => {}, displayAction: async () => {}, hubAction: async () => {}, canBuy: (id: string, company: CompanyId) => canBuy(game.value,id,company), canSell: (id: string, company: CompanyId) => canSell(game.value,id,company), buyShare: (id: CompanyId) => changeTrade(id,'buy'), sellShare: (id: CompanyId) => changeTrade(id,'sell'), undoTrade: () => { const previous = tradeHistory.pop(); if (previous) game.value = previous } }
 })

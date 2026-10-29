@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import type { RealtimeChannel } from '@supabase/supabase-js'
-import { canBuy as mayBuy, canSell as maySell, totalCapital, previewTurn, influenceCardPrice as getInfluenceCardPrice, DEFAULT_INFLUENCE_CARD_PRICE, type Turn, type TradeOrder } from '../../supabase/functions/_shared/game'
+import { canBuy as mayBuy, canSell as maySell, totalCapital, previewTurn, influenceCardPrice as getInfluenceCardPrice, DEFAULT_INFLUENCE_CARD_PRICE, VICTORY_CARD_PRICE, type Turn, type TradeOrder } from '../../supabase/functions/_shared/game'
 import type { CompanyId, GameState, PlayerView } from '@/game/types'
 import { readMarketHistory, updateMarketHistory, type MarketHistory } from '@/game/marketHistory'
 import { supabase, hasSupabase } from '@/lib/supabase'
@@ -59,7 +59,7 @@ export const useGameStore = defineStore('game', () => {
     try { localStorage.setItem(`race-to-the-bottom:v3:market:${room}`,JSON.stringify(marketHistory.value)) } catch { /* Keep the current result in memory when storage is unavailable. */ }
   }, { flush:'sync' })
 
-  const influenceCardPrice = computed(() => game.value ? getInfluenceCardPrice(game.value) : DEFAULT_INFLUENCE_CARD_PRICE)
+  const influenceCardPrice = computed(() => game.value ? getInfluenceCardPrice(game.value, game.value.players.find(player => player.id === playerId.value)) : DEFAULT_INFLUENCE_CARD_PRICE)
   const localGame = computed(() => {
     const state = game.value, id = playerId.value
     if (!state || !id || state.phase !== 'playing') return state
@@ -73,13 +73,20 @@ export const useGameStore = defineStore('game', () => {
       const result = previewTurn(copy,id,orders)
       const player = result.players.find(p => p.id === id)!
       const purchase = publicMe?.stage === 'ready' ? ownCards.value?.pending?.purchase : draft.value?.purchase
-      if (purchase) player.balance -= purchase === 'victory' ? 30 : influenceCardPrice.value
+      if (purchase) player.balance -= purchase === 'victory' ? VICTORY_CARD_PRICE : influenceCardPrice.value
       player.stage = publicMe?.stage === 'ready' ? 'ready' : draft.value?.stage ?? 'trading'
       return result
     } catch { return state }
   })
   const me = computed(() => localGame.value?.players.find(p => p.id === playerId.value))
-  const availableForPurchase = computed(() => (me.value?.balance ?? 0) + (draft.value?.purchase ? draft.value.purchase === 'victory' ? 30 : influenceCardPrice.value : 0))
+  const availableForPurchase = computed(() => (me.value?.balance ?? 0) + (draft.value?.purchase ? draft.value.purchase === 'victory' ? VICTORY_CARD_PRICE : influenceCardPrice.value : 0))
+  const canPurchase = computed(() => {
+    if (!me.value || !game.value) return false
+    const selectedCost = draft.value?.purchase ? draft.value.purchase === 'victory' ? VICTORY_CARD_PRICE : influenceCardPrice.value : 0
+    const capitalBeforePurchase = totalCapital(me.value, game.value.companies) + selectedCost
+    const nextPrice = (me.value.influenceCards ?? []).length === 3 ? VICTORY_CARD_PRICE : influenceCardPrice.value
+    return capitalBeforePurchase > 50 && availableForPurchase.value >= nextPrice
+  })
   const selectedCardId = computed(() => draft.value ? draft.value.cardId || null : ownCards.value?.selectedCardId)
   const hasHub = computed(() => !!hub.value)
 
@@ -210,14 +217,14 @@ export const useGameStore = defineStore('game', () => {
     if (actionName === 'select-card' && draft.value && me.value?.stage === 'influence') { draft.value.cardId = String(details.cardId); saveDraft(); return }
     if (actionName === 'finish-turn') {
       if (!draft.value || !selectedCardId.value || !['influence','purchase'].includes(me.value?.stage ?? '')) return
-      if (draft.value.stage === 'influence' && me.value && availableForPurchase.value >= ((me.value.influenceCards ?? []).length === 3 ? 30 : influenceCardPrice.value)) { draft.value.stage = 'purchase'; saveDraft(); return }
+      if (draft.value.stage === 'influence' && canPurchase.value) { draft.value.stage = 'purchase'; saveDraft(); return }
       actionName = 'submit-turn'; details = { turn: { ...draft.value, cardId:selectedCardId.value } }
     }
-    if (actionName === 'exchange-card' || actionName === 'exchange-hand') details = { ...details, round:round.value, selectedCardId:selectedCardId.value }
+    if (actionName === 'exchange-card') details = { ...details, round:round.value, selectedCardId:selectedCardId.value }
     switchingLobby = actionName === 'new-lobby'
     busy.value = true; error.value = null
     const id = session.value.id; const token = generation
-    try { const result = await call('game-action', { sessionId: id, matchId:game.value?.matchId, action: actionName, ...details }); if (token === generation) { if (switchingLobby) { leave(); apply(result); setRole('main'); subscribe() } else { apply(result); if (actionName === 'exchange-hand' && !error.value && draft.value) { draft.value.cardId = ''; saveDraft() } } } }
+    try { const result = await call('game-action', { sessionId: id, matchId:game.value?.matchId, action: actionName, ...details }); if (token === generation) { if (switchingLobby) { leave(); apply(result); setRole('main'); subscribe() } else { apply(result) } } }
     catch (caught) { error.value = caught instanceof Error ? caught.message : 'Ошибка хода'; await sync() }
     finally { switchingLobby = false; busy.value = false }
   }
@@ -303,6 +310,6 @@ export const useGameStore = defineStore('game', () => {
     finally { busy.value = false }
   }
   function exitHub() { if (hubTimer) clearTimeout(hubTimer); hubTimer = null; hub.value = null; localStorage.removeItem(HUB_KEY); leave() }
-  return { openDisplay, hub, hasHub, marketHistory, draft, influenceCardPrice, availableForPurchase, selectedCardId, hubAction, displayAction, exitHub, undoTrade, game, players, companies, me, phase, round, totalRounds, roomCode, minPrice, maxPrice, winnerIds, ranking, hasRoom, ownCards, isMain, role, error, busy, restoring, restoreFailed, connection, connect, action, restore, leave, setRole, canBuy, canSell,
+  return { openDisplay, hub, hasHub, marketHistory, draft, influenceCardPrice, availableForPurchase, canPurchase, victoryCardPrice: VICTORY_CARD_PRICE, selectedCardId, hubAction, displayAction, exitHub, undoTrade, game, players, companies, me, phase, round, totalRounds, roomCode, minPrice, maxPrice, winnerIds, ranking, hasRoom, ownCards, isMain, role, error, busy, restoring, restoreFailed, connection, connect, action, restore, leave, setRole, canBuy, canSell,
     buyShare: (companyId: CompanyId) => localTrade(companyId,'buy'), sellShare: (companyId: CompanyId) => localTrade(companyId,'sell') }
 })
