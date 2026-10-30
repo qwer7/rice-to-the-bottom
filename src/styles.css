@@ -105,23 +105,8 @@ button {
   margin-bottom: 12px;
 }
 
-.board__status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  align-items: baseline;
-  margin-bottom: 14px;
-}
 
-.status__round {
-  font-size: 18px;
-  font-weight: 700;
-}
 
-.status__phase {
-  color: var(--accent);
-  font-weight: 600;
-}
 
 .company-grid {
   display: grid;
@@ -187,35 +172,9 @@ button {
   color: var(--flat);
 }
 
-.price-track {
-  position: relative;
-  padding-top: 6px;
-}
 
-.price-track__bar {
-  position: relative;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #3a2222, #262b34 50%, #16321f);
-}
 
-.price-track__marker {
-  position: absolute;
-  top: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 3px solid var(--surface-2);
-  transform: translate(-50%, -50%);
-}
 
-.price-track__ticks {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 11px;
-}
 
 .table {
   width: 100%;
@@ -493,32 +452,9 @@ button {
   font-size: 13px;
 }
 
-.winner {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
 
-.podium {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
 
-.podium__item {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-}
 
-.podium__item.is-winner {
-  border-color: var(--up);
-}
 
 .grow {
   flex: 1;
@@ -594,14 +530,9 @@ body {
 .room-card > p { max-width: 480px; color: var(--muted); }
 
 .card { padding: 18px; border-color: var(--border); border-radius: 16px; background: linear-gradient(145deg, rgba(36,43,53,.96), rgba(26,31,38,.96)); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
-.board__status { margin-bottom: 18px; }
-.status__round { font-family: Georgia, serif; font-size: 26px; letter-spacing: -.03em; }
-.status__phase { padding: 4px 8px; border-radius: 6px; background: rgba(158,225,90,.14); color: var(--accent); font-size: 12px; }
 .company-card { border-color: var(--border); background: #171c23; gap: 14px; }
 .company-card__name { font-weight: 850; letter-spacing: .05em; }
 .company-card__price { font-family: Georgia, serif; font-size: 38px; }
-.price-track__bar { height: 7px; background: linear-gradient(90deg, #5f2a2a, #68717e 52%, #315c38); }
-.price-track__marker { border-color: #171c23; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
 .table tr.is-active td { background: rgba(158,225,90,.09); }
 .tab, .influence-option { background: #171c23; }
 .tab.is-active, .influence-option.is-selected { border-color: var(--accent); background: rgba(158,225,90,.12); }
@@ -1025,9 +956,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .host-screen, .app--tv .market-board { gap: 22px; }
 .app--tv .card { padding: 10px 14px; border-radius: 12px; margin: 0; }
 .app--tv .market-prices { background: transparent; padding: 0; border: 0; }
-.app--tv .board__status { margin-bottom: 8px; gap: 14px; }
-.app--tv .status__round { font-size: clamp(18px, 2vw, 28px); }
-.app--tv .status__phase { font-size: 12px; }
 .app--tv .company-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .app--tv .company-card { aspect-ratio: auto; height: clamp(107px, 24vh, 248px); padding: 14px 34px 14px 14px; border-radius: 12px; gap: 4px; }
 .app--tv .company-card__name { font-size: clamp(14px, 1.65vw, 24px); }
@@ -1058,9 +986,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv .room-lobby > .muted { font-size: 13px; }
 .app--tv .lobby-roster { margin: 10px 0; gap: 6px; }
 .app--tv .lobby-roster li { padding: 8px 10px; }
-.app--tv .game-over { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.app--tv .game-over .podium { display: none; }
-.app--tv .winner { font-size: clamp(18px, 2.2vw, 32px); margin: 0; }
 .reveal-backdrop--tv { padding: 3vh 3vw; }
 .reveal-backdrop--tv .reveal-dialog { padding: 18px; max-height: 94dvh; width: 100%; }
 .reveal-backdrop--tv .section-heading h2 { font-size: clamp(22px, 3vw, 40px); }

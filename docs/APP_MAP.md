@@ -35,8 +35,8 @@ Cloudflare Pages раздаёт веб-сборку. Android — WebView тог�
 | Выбор экрана и стартовое восстановление | `src/app/App.vue`, `src/composables/useDisplayMode.ts` |
 | Сессия, черновик, сеть, роли, восстановление | `src/stores/gameStore.ts` |
 | Вход и сбор игроков | `LobbyScreen.vue`, `RoomLobby.vue`, `RoomQr.vue` в `src/components/` |
-| Телефон и ход | `ClientScreen.vue`, `PlayerPanel.vue`, `TradeControls.vue`, `InfluencePicker.vue` |
-| Доска, раскрытие и результаты | `HostScreen.vue`, `MarketBoard.vue`, `CompanyCard.vue`, `GameOver.vue` |
+| Телефон и ход | `ClientScreen.vue`, `PlayerPanel.vue`, `TradeControls.vue`, `InfluencePicker.vue`, `InfluencePurchase.vue` |
+| Доска, раскрытие и результаты | `HostScreen.vue`, `MarketBoard.vue`, `CapitalBoard.vue`, `BoardReveal.vue`, `CompanyCard.vue` |
 | Управление, совместимость с хабами по ключу | `ManagementScreen.vue`, `HubScreen.vue`, `HubKey.vue` |
 | Оформление | `src/styles.css`, `src/game/cardPresentation.ts` |
 | Правила, карты, расчёты, проверка хода | `supabase/functions/_shared/game.ts` |
