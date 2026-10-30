@@ -1201,6 +1201,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .market-card-half--empty { color: var(--muted); opacity: .55; }
 .market-card-half__label { font-size: clamp(9px, 1.2vw, 13px); font-weight: 800; letter-spacing: .015em; white-space: nowrap; }
 .market-card-half__value { font-size: clamp(20px, 3vw, 32px); font-weight: 800; line-height: 1; }
+.market-card-half__value, .card-mini__effect strong { text-shadow: 0 2px 3px #000b; }
 .influence-picker .hand-item { padding: 0; border: 1px solid transparent; background: none; }
 .influence-picker .hand-item > .influence-card { padding: 10px; border: 1px solid #536172; background: linear-gradient(135deg, var(--card-glow-a) 0%, var(--card-glow-a) 48%, var(--card-glow-b) 52%, var(--card-glow-b) 100%), #181f29; }
 .influence-picker .table-slot .table-influence { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; width: 120px; min-height: 0; aspect-ratio: 1; padding: 8px; }
@@ -1219,14 +1220,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .influence-card, .card-mini, .influence-picker .hand-item > .influence-card { box-shadow: 0 4px 10px #0007, inset 0 1px #ffffff24, inset 0 -1px #0006; }
 .market-card-art { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .market-card-art::after { content: ''; position: absolute; inset: 0; opacity: .4; background: repeating-linear-gradient(0deg, #ffffff0b 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, #00000014 0 1px, transparent 1px 4px); }
-.market-card-art span { position: absolute; inset: 0; background: var(--image-a) center / cover no-repeat; opacity: .42; -webkit-mask-image: linear-gradient(135deg, #000 45%, transparent 55%); mask-image: linear-gradient(135deg, #000 45%, transparent 55%); }
-.market-card-art span + span { background-image: var(--image-b); -webkit-mask-image: linear-gradient(135deg, transparent 45%, #000 55%); mask-image: linear-gradient(135deg, transparent 45%, #000 55%); }
+.market-card-art span { position: absolute; inset: 0; background: var(--image-a) center / cover no-repeat; opacity: .58; filter: contrast(.65) saturate(.8); -webkit-mask-image: linear-gradient(135deg, #000 30%, transparent 70%); mask-image: linear-gradient(135deg, #000 30%, transparent 70%); }
+.market-card-art span + span { background-image: var(--image-b); -webkit-mask-image: linear-gradient(135deg, transparent 30%, #000 70%); mask-image: linear-gradient(135deg, transparent 30%, #000 70%); }
 .influence-picker .hand-item { min-height: 0; }
 .influence-picker .hand-item > .influence-card,
-.influence-picker .table-slot .table-influence { aspect-ratio: 4 / 3; padding: 6px; }
+.influence-picker .table-slot .table-influence { aspect-ratio: 16 / 10; padding: 6px; }
 .influence-picker .market-card-half__label { font-size: 8px; }
 .influence-picker .market-card-half__value { font-size: 26px; }
-.app--tv .board-reveal .influence-card { aspect-ratio: 4 / 3; padding: 6px; }
+.app--tv .board-reveal .influence-card { aspect-ratio: 16 / 10; padding: 6px; }
 .app--tv .board-reveal .market-card-half__label { font-size: 8px; }
 .app--tv .board-reveal .market-card-half__value { font-size: 26px; }
 .table-slot--filled .table-slot__heading { justify-content: flex-end; }
