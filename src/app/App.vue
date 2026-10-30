@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useDisplayMode } from '@/composables/useDisplayMode'
 import { onMounted } from 'vue'
+import logo from '@/assets/logo.png'
 import ManagementScreen from '@/components/ManagementScreen.vue'
 import HubScreen from '@/components/HubScreen.vue'
 import LobbyScreen from '@/components/LobbyScreen.vue'
@@ -23,7 +24,7 @@ onMounted(async () => {
 <template>
   <div class="app" :class="{ 'app--personal': store.hasRoom && store.role !== 'board', 'app--player-background': !tvMode && store.role !== 'board', 'app--in-room': store.hasRoom, 'app--tv': tvMode || (store.hasRoom && store.role === 'board'), 'app--tablet': tablet && store.role !== 'board' }">
     <header class="app__header">
-      <div class="brand"><span class="brand__mark" aria-hidden="true">↓</span><div><p class="brand__name">Race to the Bottom</p><p class="brand__caption">{{ !store.hasRoom ? 'Рынок меняете вы' : store.role === 'board' ? 'Доска результатов' : store.isMain ? 'Главный игрок' : 'Игрок' }}</p></div></div>
+      <div class="brand"><img class="brand__mark" :src="logo" alt="" aria-hidden="true" /><div><p class="brand__name">Race to the Bottom</p><p class="brand__caption">{{ !store.hasRoom ? 'Рынок меняете вы' : store.role === 'board' ? 'Доска результатов' : store.isMain ? 'Главный игрок' : 'Игрок' }}</p></div></div>
       <nav v-if="store.hasRoom || store.hasHub" class="app__tools" aria-label="Экраны игры">
         <span v-if="store.hasRoom && store.phase !== 'lobby'" class="header-room" :aria-label="`Код комнаты: ${store.roomCode}`"><span>Комната</span><strong>{{ store.roomCode }}</strong></span>
         <span class="connection" :class="{ 'is-online': store.connection === 'На связи', 'is-offline': store.connection.startsWith('Связь прервана') }" :title="store.connection" :aria-label="store.connection" role="status">{{ store.connection }}</span>

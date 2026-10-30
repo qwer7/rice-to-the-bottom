@@ -7,42 +7,51 @@ const devices = [
   { id: 'android', label: 'Android', width: 360, height: 800, kind: 'player' },
   { id: 'ipad', label: 'iPad', width: 768, height: 1024, kind: 'player' },
   { id: 'tv', label: 'ТВ', width: 960, height: 540, kind: 'board' },
-  { id: 'desktop', label: 'Десктоп', width: 1440, height: 900, kind: 'board' },
+  { id: 'desktop', label: 'Десктоп', width: 1080, height: 608, kind: 'board' },
 ] as const
 const query = new URLSearchParams(location.search)
+const aspects = { '16:9': 16 / 9, '16:10': 16 / 10, '4:3': 4 / 3, '2:1': 2 } as const
+type DesktopAspect = keyof typeof aspects
+const aspectParam = query.get('aspect')
+const desktopAspect = ref<DesktopAspect>(aspectParam && Object.hasOwn(aspects, aspectParam) ? aspectParam as DesktopAspect : '16:9')
 const deviceId = ref(devices.some(d => d.id === query.get('device')) ? query.get('device')! : 'iphone')
 const device = computed(() => devices.find(d => d.id === deviceId.value)!)
 const scenarios = computed(() => device.value.kind === 'board' ? boardScenarios : playerScenarios)
 const state = ref(query.get('state') || 'trading')
 if (!scenarios.value.some(s => s[0] === state.value)) state.value = scenarios.value[0][0]
-const frameWidth = computed(() => device.value.width)
-const frameHeight = computed(() => device.value.height)
+const availableHeight = ref(608)
+const desktopRatio = computed(() => aspects[desktopAspect.value])
+const frameHeight = computed(() => deviceId.value === 'desktop' ? Math.min(1080 / desktopRatio.value, availableHeight.value) : device.value.height)
+const frameWidth = computed(() => deviceId.value === 'desktop' ? Math.round(frameHeight.value * desktopRatio.value) : device.value.width)
 const player = ref(Math.max(0, Math.min(3, Number(query.get('player')) || 0)))
 const revision = ref(0)
 const viewport = ref<HTMLElement | null>(null)
+const stage = ref<HTMLElement | null>(null)
 const availableWidth = ref(800)
 let observer: ResizeObserver | undefined
 const scale = computed(() => Math.min(1, Math.max(0.1, (availableWidth.value - 24) / frameWidth.value)))
 const frameSrc = computed(() => `/ux/preview?${new URLSearchParams({ device: deviceId.value, state: state.value, player: String(player.value), revision: String(revision.value), ...(deviceId.value === 'tv' ? { screen: 'tv' } : {}) })}`)
 watch(deviceId, () => { if (!scenarios.value.some(s => s[0] === state.value)) state.value = scenarios.value[0][0] })
-watch([deviceId, state, player], () => {
+watch([deviceId, state, player, desktopAspect], () => {
   const url = new URL(location.href)
-  url.search = new URLSearchParams({ device: deviceId.value, state: state.value, player: String(player.value) }).toString()
+  url.search = new URLSearchParams({ device: deviceId.value, state: state.value, player: String(player.value), ...(deviceId.value === 'desktop' ? { aspect: desktopAspect.value } : {}) }).toString()
   history.replaceState(null, '', url)
 })
-onMounted(() => { observer = new ResizeObserver(entries => { availableWidth.value = entries[0].contentRect.width }); if (viewport.value) observer.observe(viewport.value) })
-onBeforeUnmount(() => observer?.disconnect())
+function updateViewport() { if (stage.value) availableHeight.value = Math.max(270, window.innerHeight - stage.value.getBoundingClientRect().top - 42) }
+onMounted(() => { observer = new ResizeObserver(entries => { availableWidth.value = entries[0].contentRect.width; updateViewport() }); if (viewport.value) observer.observe(viewport.value); window.addEventListener('resize', updateViewport); updateViewport() })
+onBeforeUnmount(() => { observer?.disconnect(); window.removeEventListener('resize', updateViewport) })
 </script>
 <template>
   <div class="ux">
     <div class="ux-layout">
       <aside class="ux-controls" aria-label="Настройки просмотра">
         <div><span class="ux-label">Устройство</span><div class="ux-devices"><button v-for="item in devices" :key="item.id" :class="{ active: deviceId === item.id }" @click="deviceId = item.id">{{ item.label }}</button></div></div>
+        <label v-if="deviceId === 'desktop'" class="ux-field"><span class="ux-label">Формат экрана</span><select v-model="desktopAspect"><option v-for="(_, aspect) in aspects" :key="aspect" :value="aspect">{{ aspect }}</option></select></label>
         <label v-if="device.kind === 'player'" class="ux-field"><span class="ux-label">Игрок</span><select v-model.number="player"><option :value="0">Александра · лидер</option><option :value="1">Михаил</option><option :value="2">София</option><option :value="3">Даниил</option></select></label>
         <button class="ux-reset" @click="revision++">↻ Сбросить экран</button>
         <div class="ux-states"><span id="ux-states-label" class="ux-label">Состояние экрана</span><div class="ux-state-list" role="group" aria-labelledby="ux-states-label"><button v-for="item in scenarios" :key="item[0]" :class="{ active: state === item[0] }" :aria-pressed="state === item[0]" @click="state = item[0]"><span>{{ item[1] }}</span><span v-if="state === item[0]" aria-hidden="true">✓</span></button></div></div>
       </aside>
-      <main ref="viewport" class="ux-preview"><div class="ux-preview-heading"><div><span class="ux-label">Предпросмотр</span><h2>{{ device.label }} <span>· {{ scenarios.find(s => s[0] === state)?.[1] }}</span></h2></div><span class="ux-dimensions">{{ frameWidth }} × {{ frameHeight }} px · {{ Math.round(scale * 100) }}%</span></div><div class="ux-stage"><div class="ux-frame-shell" :style="{ width: `${frameWidth * scale}px`, height: `${frameHeight * scale}px` }"><iframe :key="frameSrc" title="Предпросмотр интерфейса игры" :src="frameSrc" :style="{ width: `${frameWidth}px`, height: `${frameHeight}px`, transform: `scale(${scale})` }" /></div></div></main>
+      <main ref="viewport" class="ux-preview"><div class="ux-preview-heading"><div><span class="ux-label">Предпросмотр</span><h2>{{ device.label }} <span>· {{ scenarios.find(s => s[0] === state)?.[1] }}</span></h2></div><span class="ux-dimensions">{{ frameWidth }} × {{ Math.round(frameHeight) }} px · {{ Math.round(scale * 100) }}%</span></div><div ref="stage" class="ux-stage"><div class="ux-frame-shell" :style="{ width: `${frameWidth * scale}px`, height: `${frameHeight * scale}px` }"><iframe :key="frameSrc" title="Предпросмотр интерфейса игры" :src="frameSrc" :style="{ width: `${frameWidth}px`, height: `${frameHeight}px`, transform: `scale(${scale})` }" /></div></div></main>
     </div>
   </div>
 </template>
