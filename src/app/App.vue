@@ -21,7 +21,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div class="app" :class="{ 'app--personal': store.hasRoom && store.role !== 'board', 'app--in-room': store.hasRoom, 'app--tv': tvMode || (store.hasRoom && store.role === 'board'), 'app--tablet': tablet && store.role !== 'board' }">
+  <div class="app" :class="{ 'app--personal': store.hasRoom && store.role !== 'board', 'app--player-background': !tvMode && store.role !== 'board', 'app--in-room': store.hasRoom, 'app--tv': tvMode || (store.hasRoom && store.role === 'board'), 'app--tablet': tablet && store.role !== 'board' }">
     <header class="app__header">
       <div class="brand"><span class="brand__mark" aria-hidden="true">↓</span><div><p class="brand__name">Race to the Bottom</p><p class="brand__caption">{{ !store.hasRoom ? 'Рынок меняете вы' : store.role === 'board' ? 'Доска результатов' : store.isMain ? 'Главный игрок' : 'Игрок' }}</p></div></div>
       <nav v-if="store.hasRoom || store.hasHub" class="app__tools" aria-label="Экраны игры">

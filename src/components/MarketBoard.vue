@@ -4,7 +4,7 @@ import CompanyCard from './CompanyCard.vue'
 import CapitalBoard from './CapitalBoard.vue'
 import BoardReveal from './BoardReveal.vue'
 import { useGameStore } from '@/stores/gameStore'
-import { influenceIcons } from '@/game/influenceIcons'
+import InfluenceIcon from './InfluenceIcon.vue'
 defineProps<{ reveal?: boolean }>()
 const store = useGameStore()
 const stageLabel = (stage: string) => stage === 'ready' ? 'Готов' : 'Делает ход'
@@ -20,6 +20,6 @@ const stageLabel = (stage: string) => stage === 'ready' ? 'Готов' : 'Дел
     <CapitalBoard v-if="!reveal" />
     <BoardReveal v-if="reveal" />
     <footer v-if="store.phase === 'finished' && !reveal" class="board-winner"><span>{{ (store.winnerIds?.length ?? 0) > 1 ? 'Победители' : 'Победитель' }}: </span><strong>{{ store.players.filter(player => store.winnerIds?.includes(player.id)).map(player => player.name).join(', ') }}</strong></footer>
-    <footer v-else-if="!reveal" class="tv-card-legend" aria-label="Обозначения карт влияния"><span v-for="id in INFLUENCE_TYPES" :key="id"><strong aria-hidden="true">{{ influenceIcons[id] }}</strong> {{ INFLUENCE_INFO[id].name }}</span></footer>
+    <footer v-else-if="!reveal" class="tv-card-legend" aria-label="Обозначения карт влияния"><span v-for="id in INFLUENCE_TYPES" :key="id"><InfluenceIcon :name="id" /> {{ INFLUENCE_INFO[id].name }}</span></footer>
   </div>
 </template>
