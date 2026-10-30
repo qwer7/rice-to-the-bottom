@@ -50,7 +50,7 @@ const deltaView = computed(() => {
         <span v-if="previousPrice !== null" class="company-card__change-label">{{ previousPrice }}$ → {{ company.price }}$</span>
         <span v-if="delta !== null" class="delta" :class="deltaView.className">{{ deltaView.text }}</span>
       </div>
-      <div class="company-card__price">{{ company.price }}<span class="money-unit" aria-hidden="true">$</span></div>
+      <div class="company-card__price"><span class="company-card__price-value">{{ company.price }}</span><span class="money-unit" aria-hidden="true">$</span></div>
     </div>
     <div class="company-thermometer" role="meter" :aria-label="`Цена ${meta.name}`" :aria-valuemin="min" :aria-valuemax="max" :aria-valuenow="company.price" :aria-valuetext="`${company.price} из ${max}`">
       <span class="company-thermometer__limit" aria-hidden="true">{{ max }}</span>

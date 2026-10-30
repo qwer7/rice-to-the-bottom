@@ -15,7 +15,7 @@ const shortPlayerName = (name: string) => { const chars = Array.from(name); retu
         <td><span :title="player.name">{{ shortPlayerName(player.name) }}</span><span v-if="store.phase === 'finished' && store.winnerIds?.includes(player.id)" class="winner-crown" aria-label="Победитель"><VictoryCrown /></span><span v-if="store.phase === 'playing'" class="tv-player-status" :class="{ 'is-ready': player.stage === 'ready' }" :aria-label="stageLabel(player.stage)">{{ player.stage === 'ready' ? '✓' : '◷' }}</span></td>
         <td><InfluenceSlots :cards="player.influenceCards" board /></td>
         <td><ShareHoldings :player="player" board /></td>
-        <td>{{ player.balance }}<span class="money-unit" aria-hidden="true">$</span></td><td><strong>{{ totalCapital(player, store.companies) }}<span class="money-unit" aria-hidden="true">$</span></strong></td>
+        <td>{{ player.balance }}<span class="money-unit" aria-hidden="true">$</span></td><td><strong :class="{ 'capital-leader': totalCapital(player, store.companies) === store.ranking[0]?.capital }" :aria-label="`${totalCapital(player, store.companies)} долларов${totalCapital(player, store.companies) === store.ranking[0]?.capital ? ', лидер по капиталу' : ''}`">{{ totalCapital(player, store.companies) }}<span class="money-unit" aria-hidden="true">$</span></strong></td>
       </tr></tbody>
     </table></div></section>
 </template>
