@@ -43,7 +43,7 @@ public final class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        diagnostic("App 1.9 started");
+        diagnostic("App 2.1 started");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         immersive();
         openBoard();

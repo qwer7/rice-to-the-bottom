@@ -1,6 +1,6 @@
 # APK для Android TV
 
-Текущая оболочка: `com.racetothebottom.tv`, **versionName 1.9**, **versionCode 10**, Android 6+ (minSdk 23, targetSdk 35).
+Текущая оболочка: `com.racetothebottom.tv`, **versionName 2.1**, **versionCode 12**, Android 6+ (minSdk 23, targetSdk 35).
 
 ## Когда нужна новая сборка
 
@@ -21,7 +21,7 @@ APK пересобирается при изменении Android-кода: а�
 
 Нужны **Python 3, JDK 17, Android SDK Platform 35, Build Tools 35**. Для установки нужен `adb` из Android SDK Platform-Tools. Сборщик использует `aapt2`, `javac`, D8, `zipalign` и `apksigner` напрямую; Gradle и сборка `dist/` ему не нужны.
 
-При выпуске следующей версии увеличить `android:versionCode` в manifest относительно установленного APK и обновить `android:versionName`. Если меняется версия оболочки, обновить также диагностическую строку `App 1.9 started` в `MainActivity.java`. Package ID для обновления должен остаться прежним.
+При выпуске следующей версии увеличить `android:versionCode` в manifest относительно установленного APK и обновить `android:versionName`. Если меняется версия оболочки, обновить также диагностическую строку `App 2.1 started` в `MainActivity.java`. Package ID для обновления должен остаться прежним.
 
 ## Ключ подписи: проверить до сборки
 
