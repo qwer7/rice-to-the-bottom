@@ -15,14 +15,14 @@ onMounted(async () => {
   if (location.pathname.replace(/\/$/, '') === '/ux/preview') return
   if (tvMode) { await store.openDisplay(); store.restoring = false; return }
   await store.restore()
-  if (phone.value) {
+  if (phone.value && store.role !== 'board') {
     if (!store.restoreFailed && !store.me && (store.hasRoom || store.hasHub)) store.exitHub()
     store.setRole(store.isMain ? 'main' : 'player')
   }
 })
 </script>
 <template>
-  <div class="app" :class="{ 'app--personal': store.hasRoom && store.role !== 'board', 'app--player-background': !tvMode && store.role !== 'board', 'app--in-room': store.hasRoom, 'app--tv': tvMode || (store.hasRoom && store.role === 'board'), 'app--tablet': tablet && store.role !== 'board' }">
+  <div class="app" :class="{ 'app--entry': !tvMode && !store.hasRoom && !store.hasHub, 'app--personal': store.hasRoom && store.role !== 'board', 'app--player-background': !tvMode && (store.role !== 'board' || (!store.hasRoom && !store.hasHub)), 'app--in-room': store.hasRoom, 'app--tv': tvMode || (store.hasRoom && store.role === 'board'), 'app--tablet': tablet && store.role !== 'board' }">
     <header class="app__header">
       <div class="brand"><img class="brand__mark" :src="logo" alt="" aria-hidden="true" /><div><p class="brand__name">Race to the Bottom</p><p class="brand__caption">{{ !store.hasRoom ? 'Рынок меняете вы' : store.role === 'board' ? 'Доска результатов' : store.isMain ? 'Главный игрок' : 'Игрок' }}</p></div></div>
       <nav v-if="store.hasRoom || store.hasHub" class="app__tools" aria-label="Экраны игры">

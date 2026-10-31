@@ -943,6 +943,36 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app--tv, .app--player-background {
   background: linear-gradient(#101318cc, #101318cc), url('./assets/game-backgrounds-web-jpeg/board-background-full-hd.jpg') center / cover no-repeat, #101318;
 }
+.app--entry .app__header { justify-content: center; margin-bottom: 0; }
+.app--entry .brand__caption { display: none; }
+.lobby-screen { width: 100%; align-items: center; gap: 28px; padding-bottom: 36px; }
+.lobby-screen .lobby-intro { max-width: 600px; padding: 28px 0 0; text-align: center; }
+.lobby-screen .lobby-intro h1 { margin: 0 0 14px; font-family: inherit; font-size: clamp(36px, 6vw, 60px); font-weight: 800; letter-spacing: -.035em; }
+.lobby-screen .lobby-intro > .muted { max-width: 560px; font-size: clamp(15px, 2vw, 20px); }
+.lobby-panel { display: grid; gap: 24px; width: min(100%, 560px); padding: 22px; }
+.lobby-roles { display: grid; grid-template-columns: 1fr 1fr; width: min(100%, 560px); margin-bottom: -12px; border: 1px solid #445367; border-radius: 10px; overflow: hidden; }
+.lobby-roles button { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 56px; padding: 8px; border: 1px solid transparent; border-radius: 9px; background: #111820a0; color: #aebed1; font: inherit; font-weight: 700; cursor: pointer; }
+.lobby-roles button span { color: #aebed1; font-size: 22px; line-height: 1; }
+.lobby-roles button.is-selected { border-color: var(--accent); background: #9ee15a1a; color: var(--text); }
+.lobby-roles button.is-selected span { color: var(--accent); }
+.lobby-roles button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.lobby-panel .lobby-form, .lobby-board-form { display: grid; gap: 18px; width: 100%; max-width: none; margin: 0; }
+.lobby-panel .field { gap: 8px; font-weight: 600; }
+.lobby-panel .field input { width: 100%; min-height: 50px; background: #1c2632; }
+.lobby-panel .btn--primary { min-height: 52px; font-size: 16px; }
+.lobby-panel__hint { text-align: center; }
+.lobby-board-form details > summary { cursor: pointer; color: var(--muted); }
+.lobby-board-form details form { margin-top: 12px; }
+.client-screen > .room-lobby { width: min(100%, 560px); align-self: center; }
+.client-screen > .room-lobby h2 { font-family: inherit; font-weight: 800; }
+.client-screen > .room-lobby > button { width: 100%; min-height: 48px; }
+@media (max-width: 600px) {
+  .app--entry { padding: 22px 16px; }
+  .lobby-screen { gap: 24px; }
+  .lobby-screen .lobby-intro { padding-top: 20px; }
+  .lobby-panel { padding: 16px; gap: 20px; }
+  .lobby-roles button { font-size: 13px; }
+}
 .app--tv .app__header { flex-wrap: nowrap; margin: 0; min-height: 30px; gap: 12px; }
 .app--tv .brand { gap: 8px; }
 .app--tv .brand__mark { width: 27px; height: 27px; border-radius: 8px; font-size: 21px; }
