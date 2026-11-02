@@ -7,7 +7,14 @@ describe('Independent trading', () => {
     let g = trade(game(), 'b', 'BLUEWELL', 'buy')
     g = trade(g, 'b', 'BLUEWELL', 'sell'); g = trade(g, 'b', 'REDSTONE', 'buy')
     expect(g.players[1].balance).toBe(26); expect(g.players[1].tradesUsed).toBe(3)
-    g = trade(g,'b','REDSTONE','sell'); expect(() => trade(g, 'b', 'REDSTONE', 'buy')).toThrow('четырёх'); expect(canBuy(g,'b','REDSTONE')).toBe(false)
+    g = trade(g,'b','REDSTONE','sell'); g = trade(g,'b','REDSTONE','buy')
+    expect(() => trade(g, 'b', 'REDSTONE', 'sell')).toThrow('5 сделок'); expect(canBuy(g,'b','REDSTONE')).toBe(false)
+  })
+  it('allows six trades with a broker, including in rooms created under the old limit', () => {
+    let g = game(); g.config.maxTrades = 4; g.players[1].influenceCards = ['broker']
+    for (let i = 0; i < 3; i++) { g = trade(g, 'b', 'BLUEWELL', 'buy'); g = trade(g, 'b', 'BLUEWELL', 'sell') }
+    expect(g.players[1].tradesUsed).toBe(6)
+    expect(() => trade(g, 'b', 'BLUEWELL', 'buy')).toThrow('6 сделок')
   })
   it('allows one player to enter influence while others still trade', () => {
     const g = endTrading(game(), 'b')

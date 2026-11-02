@@ -30,4 +30,11 @@ describe('UX preview', () => {
     await store.action('select-card', { cardId: store.ownCards.hand[0].id })
     expect(store.selectedCardId).toBe(store.ownCards.hand[0].id)
   })
+  it('keeps the victory purchase scenario available at its new price', () => {
+    vi.stubGlobal('location', { search: '?device=android&state=victory-purchase&player=0' })
+    const store = usePreviewStore(createPinia())
+    expect(store.victoryCardPrice).toBe(80)
+    expect(store.canPurchase).toBe(true)
+    expect(store.me?.stage).toBe('purchase')
+  })
 })

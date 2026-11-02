@@ -1,20 +1,21 @@
 export type CompanyId = 'REDSTONE' | 'BLUEWELL' | 'GOLDSPARK'
 export const COMPANY_IDS: CompanyId[] = ['REDSTONE', 'BLUEWELL', 'GOLDSPARK']
-export const DEFAULT_CONFIG = { minPrice: 1, maxPrice: 9, initialPrice: 4, initialBalance: 30, totalRounds: 8, minPlayers: 2, maxPlayers: 5, maxTrades: 4, handSize: 4, maxShares: 5, maxExchanges: 5 }
+export const DEFAULT_CONFIG = { minPrice: 1, maxPrice: 9, initialPrice: 4, initialBalance: 30, totalRounds: 8, minPlayers: 2, maxPlayers: 5, maxTrades: 5, handSize: 4, maxShares: 5, maxExchanges: 5 }
 export type GameConfig = typeof DEFAULT_CONFIG & { influenceCardPrice?: number }
 export const DEFAULT_INFLUENCE_CARD_PRICE = 20
-export const VICTORY_CARD_PRICE = 50
+export const VICTORY_CARD_PRICE = 80
+export const ANALYST_BONUS = 7
 export function influenceCardPrice(state: GameState, player?: Player): number {
   const base = state.config.influenceCardPrice
   const startingPrice = typeof base === 'number' && Number.isInteger(base) && base >= 0 ? base : DEFAULT_INFLUENCE_CARD_PRICE
-  return startingPrice + 10 * Math.min(player?.influenceCards?.length ?? 0, 2)
+  return startingPrice + 15 * Math.min(player?.influenceCards?.length ?? 0, 2)
 }
 export type Card = { id: string; kind: 'pair'; up: CompanyId; down: CompanyId; gain: 1 | 2; loss: 1 | 2 } | { id: string; kind: 'single'; company: CompanyId; delta: 3 | -3 } | { id: string; kind: 'swap'; a: CompanyId; b: CompanyId }
 export interface TradeOrder { companyId: CompanyId; action: 'buy' | 'sell' }
 export const INFLUENCE_TYPES = ['dividends', 'broker', 'analyst', 'tax', 'theft', 'lucky'] as const
 export type InfluenceType = typeof INFLUENCE_TYPES[number]
 export type Purchase = InfluenceType | 'victory'
-export const INFLUENCE_INFO: Record<InfluenceType, { name: string; description: string }> = { dividends: {name:'Дивиденды', description:'В начале раунда $1 за каждую акцию дороже $5.'}, broker:{name:'Брокер', description:'До пяти сделок за раунд.'}, analyst:{name:'Аналитик', description:'Обмен карты каждый ход или $3, если обмен не использован.'}, tax:{name:'Налог', description:'Однократно: соперники платят половину баланса; владелец получает наибольший платёж.'}, theft:{name:'Кража', description:'Однократно: по одной акции каждого цвета у соперников; владелец получает по одной каждого цвета.'}, lucky:{name:'Везунчик', description:'При продаже любой акции получить дополнительно $1.'} }
+export const INFLUENCE_INFO: Record<InfluenceType, { name: string; description: string }> = { dividends: {name:'Дивиденды', description:'В начале раунда $1 за каждую акцию; если акций одного цвета 5, каждая из них приносит $2.'}, broker:{name:'Брокер', description:'До шести сделок за раунд.'}, analyst:{name:'Аналитик', description:'Обмен карты каждый ход или $7, если обмен не использован.'}, tax:{name:'Налог', description:'Однократно: соперники платят половину баланса; владелец получает наибольший платёж.'}, theft:{name:'Кража', description:'Однократно: по одной акции каждого цвета у соперников; владелец получает по одной каждого цвета.'}, lucky:{name:'Везунчик', description:'При продаже любой акции получить дополнительно $1.'} }
 export interface Turn { round: number; id: string; trades: TradeOrder[]; cardId: string; purchase?: Purchase | null }
 export interface Player { id: string; name: string; balance: number; portfolio: Record<CompanyId, number>; stage: 'trading' | 'influence' | 'purchase' | 'ready'; tradesUsed: number; influenceCards?: InfluenceType[]; victoryCard?: boolean }
 export interface CompanyState { id: CompanyId; price: number }
@@ -93,9 +94,9 @@ function requireStage(state: GameState, playerId: string, stage: Player['stage']
   return player
 }
 export const hasInfluence = (player: Player, type: InfluenceType) => (player.influenceCards ?? []).includes(type)
-export const tradeLimit = (state: GameState, player: Player) => state.config.maxTrades + (hasInfluence(player, 'broker') ? 1 : 0)
+export const tradeLimit = (state: GameState, player: Player) => Math.max(DEFAULT_CONFIG.maxTrades, state.config.maxTrades) + (hasInfluence(player, 'broker') ? 1 : 0)
 export const salePrice = (player: Player, price: number) => price + (hasInfluence(player, 'lucky') ? 1 : 0)
-export const dividendAmount = (state: GameState, player: Player) => COMPANY_IDS.reduce((sum, id) => sum + (requireCompany(state, id).price > 5 ? player.portfolio[id] : 0), 0)
+export const dividendAmount = (_state: GameState, player: Player) => COMPANY_IDS.reduce((sum, id) => sum + player.portfolio[id] * (player.portfolio[id] === 5 ? 2 : 1), 0)
 export function canBuy(state: GameState, playerId: string, id: CompanyId): boolean {
   const p = requirePlayer(state, playerId)
   return state.phase === 'playing' && p.stage === 'trading' && p.tradesUsed < tradeLimit(state, p) && p.balance >= requireCompany(state, id).price && p.portfolio[id] < state.config.maxShares
@@ -107,7 +108,7 @@ export function canSell(state: GameState, playerId: string, id: CompanyId): bool
 export function trade(state: GameState, playerId: string, id: CompanyId, action: 'buy' | 'sell'): GameState {
   const player = requireStage(state, playerId, 'trading')
   const company = requireCompany(state, id)
-  if (player.tradesUsed >= tradeLimit(state, player)) throw new Error('За раунд можно купить и продать суммарно не больше четырёх акций')
+  if (player.tradesUsed >= tradeLimit(state, player)) throw new Error(`За раунд можно совершить не больше ${tradeLimit(state, player)} сделок`)
   if (action === 'buy' && player.portfolio[id] >= state.config.maxShares) throw new Error('Можно иметь не больше пяти акций каждой компании')
   if (action === 'buy' && player.balance < company.price) throw new Error('Недостаточно денег')
   if (action === 'sell' && player.portfolio[id] < 1) throw new Error('Нет акций для продажи')
@@ -181,9 +182,9 @@ export function finishTurn(state: GameState, playerId: string, privatePlayers: P
   for (const player of next.players) {
     const turn = privatePlayers[player.id]?.pending
     if (turn && hasInfluence(player, 'analyst') && turn.purchase !== 'analyst' && !privatePlayers[player.id].exchanged) {
-      player.balance += 3
-      moneyChanges.push({ playerId: player.id, source: 'analyst', amount: 3 })
-      effects.push(`${player.name}: Аналитик +$3`)
+      player.balance += ANALYST_BONUS
+      moneyChanges.push({ playerId: player.id, source: 'analyst', amount: ANALYST_BONUS })
+      effects.push(`${player.name}: Аналитик +$${ANALYST_BONUS}`)
     }
     if (turn && hasInfluence(player, 'lucky') && turn.purchase !== 'lucky') {
       const bonus = turn.trades.filter(order => order.action === 'sell').length
@@ -248,7 +249,7 @@ export function playerView(privateState?: PrivateState): PlayerView | null {
 }
 
 export function previewTurn(state: GameState, playerId: string, trades: TradeOrder[]): GameState {
-  if (!Array.isArray(trades) || trades.length > tradeLimit(state, requirePlayer(state, playerId))) throw new Error('Допустимо до четырёх сделок')
+  if (!Array.isArray(trades) || trades.length > tradeLimit(state, requirePlayer(state, playerId))) throw new Error(`Допустимо до ${tradeLimit(state, requirePlayer(state, playerId))} сделок`)
   let next = clone(state)
   for (const order of trades) {
     if (!order || !COMPANY_IDS.includes(order.companyId) || !['buy', 'sell'].includes(order.action)) throw new Error('Некорректная сделка')

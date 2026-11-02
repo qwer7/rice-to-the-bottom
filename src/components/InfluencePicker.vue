@@ -4,6 +4,7 @@ import { cardTheme } from '@/game/cardPresentation'
 import { useDisplayMode } from '@/composables/useDisplayMode'
 import InfluenceCard from './InfluenceCard.vue'
 import { useGameStore } from '@/stores/gameStore'
+import { ANALYST_BONUS } from '../../supabase/functions/_shared/game'
 const store = useGameStore()
 const { tablet } = useDisplayMode()
 const selected = computed(() => store.ownCards?.hand.find(c => c.id === store.selectedCardId))
@@ -84,7 +85,7 @@ function pointerCancel(event: PointerEvent) { if (gesture?.id === event.pointerI
 </script>
 <template>
   <section class="stack influence-picker">
-    <div class="section-heading stage-heading"><div class="stage-heading__title"><p class="eyebrow">2/3</p><h2>Рыночная карта</h2></div><div class="stage-actions"><span class="badge">{{ hasAnalyst ? 'Обмен или 3$' : `Обмены ${store.ownCards?.exchangesUsed ?? 0}/5` }}</span></div></div>
+    <div class="section-heading stage-heading"><div class="stage-heading__title"><p class="eyebrow">2/3</p><h2>Рыночная карта</h2></div><div class="stage-actions"><span class="badge">{{ hasAnalyst ? `Обмен или ${ANALYST_BONUS}$` : `Обмены ${store.ownCards?.exchangesUsed ?? 0}/5` }}</span></div></div>
     <div ref="tableZone" class="table-slot" :class="{ 'table-slot--filled': selected, 'is-drop-target': dropTarget === 'table', 'is-drop-available': mobile && armedCard }">
       <div class="table-slot__heading"><p v-if="!selected" class="eyebrow">На столе</p><div class="table-slot__actions"><button v-if="mobile && armedCard" class="btn btn--primary zone-play" :disabled="store.busy" @click="useCard('table')">Выложить</button><button v-if="selected" class="btn btn--small cancel-card" :disabled="store.busy" @click="store.action('unselect-card')">Отменить</button></div></div>
       <div v-if="selected" class="table-slot__played"><span class="table-slot__vertical-label">На столе</span><InfluenceCard :card="selected" class="table-influence" /></div>

@@ -16,7 +16,7 @@ describe('Atomic hidden turns',()=>{
  })
  it('rejects overtrading, overspending, unowned cards and stale rounds without changing input',()=>{
   const {state,privatePlayers}=setup(), original=structuredClone({state,privatePlayers})
-  expect(()=>submitTurn(state,'a',privatePlayers,{...turn('a',privatePlayers.a.hand[0].id),trades:[order,order,order,order,order]})).toThrow('четырёх')
+  expect(()=>submitTurn(state,'a',privatePlayers,{...turn('a',privatePlayers.a.hand[0].id),trades:[order,order,order,order,order,order]})).toThrow('до 5 сделок')
   expect(()=>submitTurn(state,'a',privatePlayers,turn('a','forged'))).toThrow('руке')
   expect(()=>submitTurn(state,'a',privatePlayers,turn('a',privatePlayers.a.hand[0].id,2))).toThrow('раунд')
   expect({state,privatePlayers}).toEqual(original)

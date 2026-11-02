@@ -42,7 +42,7 @@ export const usePreviewStore = defineStore('game', () => {
     const deck = createDeck()
     const sampleCards = [deck.find(card => card.kind === 'pair')!, deck.find(card => card.kind === 'single' && card.company === 'GOLDSPARK' && card.delta > 0)!, deck.find(card => card.kind === 'single' && card.delta < 0)!, deck.find(card => card.kind === 'swap')!]
     if (board) { initial.players[0].balance = 20; initial.players[1].balance = 20; initial.players[2].balance = 45; initial.players[2].influenceCards = ['tax']; initial.players[3].balance = 25 }
-    initial.lastReveal = { round: 3, cards: initial.players.map((p, i) => ({ playerId: p.id, card: sampleCards[i] })), pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 }, purchases: [{ playerId: 'player-2', purchase: 'broker' }, { playerId: 'player-3', purchase: 'tax' }], effects: [], moneyChanges: [{ playerId: 'player-1', source: 'tax', amount: -20 }, { playerId: 'player-2', source: 'tax', amount: -20 }, { playerId: 'player-4', source: 'tax', amount: -25 }, { playerId: 'player-3', source: 'tax', amount: 25 }, { playerId: 'player-4', source: 'lucky', amount: 2 }, { playerId: 'player-1', source: 'analyst', amount: 3 }] }
+    initial.lastReveal = { round: 3, cards: initial.players.map((p, i) => ({ playerId: p.id, card: sampleCards[i] })), pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 }, purchases: [{ playerId: 'player-2', purchase: 'broker' }, { playerId: 'player-3', purchase: 'tax' }], effects: [], moneyChanges: [{ playerId: 'player-1', source: 'tax', amount: -20 }, { playerId: 'player-2', source: 'tax', amount: -20 }, { playerId: 'player-4', source: 'tax', amount: -25 }, { playerId: 'player-3', source: 'tax', amount: 25 }, { playerId: 'player-4', source: 'lucky', amount: 2 }, { playerId: 'player-1', source: 'analyst', amount: 7 }] }
     if (initial.phase === 'finished' || scenario === 'reveal-victory') initial.winnerIds = scenario === 'tie' ? ['player-1', 'player-2'] : ['player-1']
   }
   const game = ref(initial)
@@ -53,7 +53,7 @@ export const usePreviewStore = defineStore('game', () => {
   if (scenario === 'trading-empty') initial.players[index].balance = 0
   if (scenario === 'influence-limit') { ownCards.value.exchangesUsed = 5; initial.players[index].influenceCards = (initial.players[index].influenceCards ?? []).filter(card => card !== 'analyst') }
   if (scenario === 'influence-exchanged') { ownCards.value.exchanged = true; ownCards.value.exchangesUsed = 2 }
-  if (scenario === 'victory-purchase') { initial.players[index].influenceCards = ['analyst', 'broker', 'lucky']; initial.players[index].balance = 60 }
+  if (scenario === 'victory-purchase') { initial.players[index].influenceCards = ['analyst', 'broker', 'lucky']; initial.players[index].balance = 100 }
   if (scenario === 'trading-limit') initial.players[index].tradesUsed = initial.config.maxTrades + (initial.players[index].influenceCards?.includes('broker') ? 1 : 0)
   const role = ref(board ? 'board' : scenario.startsWith('manage-') ? 'manage' : index === 0 ? 'main' : 'player')
   const isMain = ref(index === 0 || scenario.startsWith('manage-'))

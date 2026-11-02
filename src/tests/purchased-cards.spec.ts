@@ -21,12 +21,13 @@ describe('Influence cards and victory', () => {
     expect(influenceCardPrice(state, player)).toBe(20)
     expect(() => validatePurchase(player, 'tax', 20, 50)).toThrow('капитал')
     expect(() => validatePurchase(player, 'tax', 20, 51)).not.toThrow()
-    player.influenceCards = ['tax']; expect(influenceCardPrice(state, player)).toBe(30)
-    player.influenceCards.push('broker'); expect(influenceCardPrice(state, player)).toBe(40)
-    player.balance = 39; expect(() => validatePurchase(player, 'lucky', 40, 60)).toThrow('денег')
-    player.influenceCards.push('lucky'); player.balance = 49
-    expect(() => validatePurchase(player, 'victory', 40, 60)).toThrow('денег')
-    player.balance = 50; expect(() => validatePurchase(player, 'victory', 40, 60)).not.toThrow()
+    player.influenceCards = ['tax']; expect(influenceCardPrice(state, player)).toBe(35)
+    player.influenceCards.push('broker'); expect(influenceCardPrice(state, player)).toBe(50)
+    player.balance = 49; expect(() => validatePurchase(player, 'lucky', 50, 60)).toThrow('денег')
+    player.balance = 50; expect(() => validatePurchase(player, 'lucky', 50, 60)).not.toThrow()
+    player.influenceCards.push('lucky'); player.balance = 79
+    expect(() => validatePurchase(player, 'victory', 50, 90)).toThrow('денег')
+    player.balance = 80; expect(() => validatePurchase(player, 'victory', 50, 90)).not.toThrow()
   })
   it('takes half rounded down and pays the largest tax payment', () => {
     const { state, privatePlayers } = setup(4)
@@ -48,19 +49,23 @@ describe('Influence cards and victory', () => {
       { REDSTONE: 1, BLUEWELL: 0, GOLDSPARK: 0 },
     ])
   })
-  it('pays unlimited dividends only for shares priced above five', () => {
+  it('pays dividends for every share and doubles them for each complete set of five', () => {
     const { state, privatePlayers } = setup(); state.phase = 'reveal'
     state.players[0].influenceCards = ['dividends']
     state.players[0].portfolio = { REDSTONE: 5, BLUEWELL: 5, GOLDSPARK: 4 }
     state.companies[0].price = 6; state.companies[1].price = 5; state.companies[2].price = 9
-    expect(dividendAmount(state, state.players[0])).toBe(9)
-    expect(nextRound(state, privatePlayers).state.players[0].balance).toBe(39)
+    expect(dividendAmount(state, state.players[0])).toBe(24)
+    const next = nextRound(state, privatePlayers).state
+    expect(next.players[0].balance).toBe(54)
+    expect(next.dividends).toContainEqual({ playerId: 'a', amount: 24 })
+    state.players[0].portfolio = { REDSTONE: 0, BLUEWELL: 1, GOLDSPARK: 4 }
+    expect(dividendAmount(state, state.players[0])).toBe(5)
   })
   it('pays lucky on every sale, including shares above five', () => {
     const { state } = setup(); state.players[0].influenceCards = ['lucky']; state.players[0].portfolio.REDSTONE = 1; state.companies[0].price = 6
     expect(previewTurn(state, 'a', [{ companyId: 'REDSTONE', action: 'sell' }]).players[0].balance).toBe(37)
   })
-  it('lets the analyst exchange after five exchanges and pays 3 only when unused', () => {
+  it('lets the analyst exchange after five exchanges and pays 7 only when unused', () => {
     const first = setup(); first.state.players[0].influenceCards = ['analyst']; first.privatePlayers.a.exchangesUsed = 5
     const exchanged = exchangeCard(first.state, 'a', first.privatePlayers.a, first.privatePlayers.a.hand[0].id)
     expect(exchanged.exchangesUsed).toBe(6)
@@ -69,12 +74,12 @@ describe('Influence cards and victory', () => {
     expect(used.state.lastReveal?.moneyChanges?.some(change => change.playerId === 'a' && change.source === 'analyst')).toBe(false)
     const second = setup(); second.state.players[0].influenceCards = ['analyst']
     const unused = play(second.state, second.privatePlayers)
-    expect(unused.state.players[0].balance).toBe(33)
-    expect(unused.state.lastReveal?.moneyChanges).toContainEqual({ playerId: 'a', source: 'analyst', amount: 3 })
+    expect(unused.state.players[0].balance).toBe(37)
+    expect(unused.state.lastReveal?.moneyChanges).toContainEqual({ playerId: 'a', source: 'analyst', amount: 7 })
   })
   it('waits for the leader to open the results after simultaneous victory purchases', () => {
     const { state, privatePlayers } = setup()
-    for (const player of state.players) { player.balance = 60; player.influenceCards = ['tax', 'theft', 'broker'] }
+    for (const player of state.players) { player.balance = 90; player.influenceCards = ['tax', 'theft', 'broker'] }
     const result = play(state, privatePlayers, { a: 'victory', b: 'victory' })
     expect(result.state.phase).toBe('reveal'); expect(result.state.winnerIds).toEqual(['a', 'b'])
     const final = nextRound(result.state, result.privatePlayers)
