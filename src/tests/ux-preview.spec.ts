@@ -37,4 +37,12 @@ describe('UX preview', () => {
     expect(store.canPurchase).toBe(true)
     expect(store.me?.stage).toBe('purchase')
   })
+  it('shows the TV startup and connection failure without a room', () => {
+    vi.stubGlobal('location', { search: '?device=tv&state=startup' })
+    const loading = usePreviewStore(createPinia())
+    expect(loading.restoring).toBe(true); expect(loading.hasRoom).toBe(false)
+    vi.stubGlobal('location', { search: '?device=tv&state=startup-failed' })
+    const failed = usePreviewStore(createPinia())
+    expect(failed.restoring).toBe(false); expect(failed.hasRoom).toBe(false); expect(failed.error).toContain('Supabase')
+  })
 })

@@ -54,6 +54,19 @@ describe('Local draft and one turn submission',()=>{
   expect(store.roomCode).toBe('ABC234');expect(store.me).toBeUndefined()
   store.exitHub()
  })
+ it('exposes a failed board connection and permits a retry',async()=>{
+  mocked.invoke.mockRejectedValueOnce(new Error('Failed to fetch'))
+  const store=useGameStore(); const opening=store.openDisplay()
+  expect(store.busy).toBe(true)
+  await opening
+  expect(store.busy).toBe(false); expect(store.error).toContain('Supabase'); expect(store.hasRoom).toBe(false)
+  const state={...createLobby('x','Доска'),players:[],lobbyMode:'first-player' as const}
+  const hub={id:'hub',code:'HUB234',mode:'display',isDisplayOwner:true,isManager:false,sessionId:'room',roomCode:'ABC234'}
+  mocked.invoke.mockResolvedValueOnce({data:{hub,session:{id:'room',code:'ABC234',host_user_id:null,version:1,status:'active',state},playerId:null,isHost:false,private:null},error:null})
+  await store.openDisplay()
+  expect(store.error).toBeNull(); expect(store.hasRoom).toBe(true)
+  store.exitHub()
+ })
 
  it('ignores delayed room updates that predate the joining player',async()=>{
   const state=startGame(addPlayer(createLobby('a','А'),'b','Б')), own=playerView(createPrivateState())!

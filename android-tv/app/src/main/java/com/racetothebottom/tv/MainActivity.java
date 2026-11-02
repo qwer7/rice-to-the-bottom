@@ -5,16 +5,20 @@ import android.app.AlertDialog;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.io.IOException;
@@ -43,7 +47,7 @@ public final class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        diagnostic("App 2.1 started");
+        diagnostic("App 2.2 started");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         immersive();
         openBoard();
@@ -99,7 +103,34 @@ public final class MainActivity extends Activity {
     private void openBoard() {
         destroyWeb();
         currentUrl = SITE + "?screen=tv";
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(19, 25, 33));
+        LinearLayout loading = new LinearLayout(this);
+        loading.setOrientation(LinearLayout.VERTICAL);
+        loading.setGravity(Gravity.CENTER);
+        loading.setPadding(dp(48), dp(24), dp(48), dp(24));
+        loading.setBackgroundColor(Color.rgb(19, 25, 33));
+        text(loading, "Загружаем сайт игры", 28, Color.WHITE);
+        TextView loadingStatus = new TextView(this);
+        loadingStatus.setText("Подключаемся к сайту…");
+        loadingStatus.setTextSize(18); loadingStatus.setTextColor(Color.LTGRAY);
+        loadingStatus.setGravity(Gravity.CENTER); loadingStatus.setPadding(0, dp(8), 0, dp(8));
+        loading.addView(loadingStatus);
+        Button retry = new Button(this);
+        retry.setText("Повторить"); retry.setAllCaps(false); retry.setTextSize(18);
+        retry.setVisibility(View.GONE); retry.setOnClickListener(v -> openBoard());
+        loading.addView(retry, new LinearLayout.LayoutParams(dp(360), dp(56)));
+        setContentView(root);
         web = new WebView(this);
+        WebView currentWeb = web;
+        root.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        root.addView(loading, new FrameLayout.LayoutParams(-1, -1));
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (web == currentWeb && loading.getVisibility() == View.VISIBLE) {
+                loadingStatus.setText("Сайт отвечает слишком долго. Проверьте интернет и повторите загрузку.");
+                retry.setVisibility(View.VISIBLE); retry.requestFocus();
+            }
+        }, 15000);
         web.setBackgroundColor(Color.rgb(19,25,33));
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
@@ -116,20 +147,26 @@ public final class MainActivity extends Activity {
         });
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) { diagnostic("Website loaded"); }
+            @Override public void onPageCommitVisible(WebView view, String url) {
+                if (view == web) { loading.setVisibility(View.GONE); view.requestFocus(); }
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return !allowed(request.getUrl()); }
             @Override public boolean shouldOverrideUrlLoading(WebView view, String url) { return !allowed(Uri.parse(url)); }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame() && view == web) { diagnostic("Main frame load failed: " + error.getErrorCode()); view.post(() -> { if (view == web) connectionError(); }); }
             }
+            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {
+                if (request.isForMainFrame() && view == web) { diagnostic("Main frame HTTP error: " + response.getStatusCode()); view.post(() -> { if (view == web) connectionError(); }); }
+            }
         });
-        setContentView(web); web.setFocusable(true); web.setFocusableInTouchMode(true);
+        web.setFocusable(true); web.setFocusableInTouchMode(true);
         web.requestFocus(); web.loadUrl(currentUrl); immersive();
     }
     private void connectionError() {
         destroyWeb();
         LinearLayout root = panel();
-        text(root, "Не удалось загрузить экран доски", 28, Color.WHITE);
-        text(root, "Проверьте интернет на телевизоре и повторите подключение.\nЕсли используется VPN, попробуйте без него.", 18, Color.LTGRAY);
+        text(root, "Не удалось загрузить сайт игры", 28, Color.WHITE);
+        text(root, "Проверьте интернет на телевизоре и доступность сайта, затем повторите.\nЕсли используется VPN, попробуйте без него.", 18, Color.LTGRAY);
         button(root, "Повторить", () -> openBoard());
     }
     private void menu() {

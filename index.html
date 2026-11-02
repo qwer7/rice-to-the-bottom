@@ -7,7 +7,23 @@
     <title>Race to the Bottom</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div id="startup-status" role="status" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#101318;color:#f4f1e8;font:20px system-ui,sans-serif;text-align:center;box-sizing:border-box">
+        <strong>Сайт загружен</strong>
+        <span id="startup-message">Запускаем интерфейс игры…</span>
+        <button id="startup-retry" type="button" onclick="location.reload()" style="display:none;padding:12px 24px;border:0;border-radius:8px;background:#9ee15a;color:#17200f;font:inherit;cursor:pointer">Обновить страницу</button>
+      </div>
+    </div>
+    <script>
+      setTimeout(function () {
+        var message = document.getElementById('startup-message')
+        var retry = document.getElementById('startup-retry')
+        if (message && retry) {
+          message.textContent = 'Интерфейс загружается слишком долго. Проверьте соединение и обновите страницу.'
+          retry.style.display = 'block'
+        }
+      }, 15000)
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

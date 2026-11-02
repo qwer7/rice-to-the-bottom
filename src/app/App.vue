@@ -35,11 +35,12 @@ onMounted(async () => {
         <button v-if="!tvMode" class="btn btn--small nav-button" aria-label="Выйти" title="Выйти" @click="store.exitHub()"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M10 4H4v16h6m4-13 5 5-5 5m-6-5h12"/></svg><span class="nav-label">Выйти</span></button>
       </nav>
     </header>
-    <p v-if="store.restoring" class="muted" role="status">Подключаемся…</p>
+    <section v-if="store.restoring && tvMode" class="card stack" role="status"><h1>Сайт загружен</h1><p class="muted">Подключаемся к игровому серверу Supabase и открываем лобби…</p></section>
+    <p v-else-if="store.restoring" class="muted" role="status">Подключаемся…</p>
     <template v-else>
       <p v-if="store.error" class="error error-banner" role="alert">{{ store.error }}</p>
       <button v-if="store.restoreFailed && !tvMode" class="btn" @click="store.restore()">Повторить восстановление</button>
-      <section v-if="tvMode && !store.hasRoom" class="card stack"><h1>Открываем лобби</h1><p class="muted">Доска подключается к серверу. Код комнаты появится здесь автоматически.</p><button class="btn btn--primary" :disabled="store.busy" @click="store.openDisplay()">{{ store.busy ? 'Подключаемся…' : 'Повторить подключение' }}</button></section>
+      <section v-if="tvMode && !store.hasRoom" class="card stack"><h1>{{ store.busy ? 'Сайт загружен' : 'Не удалось открыть лобби' }}</h1><p class="muted" role="status">{{ store.busy ? 'Подключаемся к игровому серверу Supabase и открываем лобби…' : 'Сайт доступен. Проверьте сообщение об ошибке и повторите подключение к серверу.' }}</p><button class="btn btn--primary" :disabled="store.busy" @click="store.openDisplay()">{{ store.busy ? 'Подключаемся…' : 'Повторить подключение' }}</button></section>
       <ManagementScreen v-else-if="store.role === 'manage' && (store.isMain || store.hub?.isManager)" />
       <HubScreen v-else-if="store.hasHub && !store.hasRoom" />
       <LobbyScreen v-else-if="!store.hasRoom" />

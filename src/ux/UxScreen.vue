@@ -16,7 +16,7 @@ const aspectParam = query.get('aspect')
 const desktopAspect = ref<DesktopAspect>(aspectParam && Object.hasOwn(aspects, aspectParam) ? aspectParam as DesktopAspect : '16:9')
 const deviceId = ref(devices.some(d => d.id === query.get('device')) ? query.get('device')! : 'iphone')
 const device = computed(() => devices.find(d => d.id === deviceId.value)!)
-const scenarios = computed(() => device.value.kind === 'board' ? boardScenarios : playerScenarios)
+const scenarios = computed(() => device.value.kind === 'board' ? (deviceId.value === 'tv' ? boardScenarios : boardScenarios.filter(s => !s[0].startsWith('startup'))) : playerScenarios)
 const state = ref(query.get('state') || 'trading')
 if (!scenarios.value.some(s => s[0] === state.value)) state.value = scenarios.value[0][0]
 const availableHeight = ref(608)
