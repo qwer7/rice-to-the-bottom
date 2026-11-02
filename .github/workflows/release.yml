@@ -107,6 +107,6 @@ jobs:
       - name: Apply pending migrations
         run: supabase db push --linked --yes
       - name: Deploy Edge Functions using JWT settings in config.toml
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID" --yes
       - name: Record released revision
         run: echo "Published commit $GITHUB_SHA to Supabase. Vercel publishes the frontend after required checks pass." >> "$GITHUB_STEP_SUMMARY"
