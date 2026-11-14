@@ -4,9 +4,28 @@ import { renderToString } from '@vue/server-renderer'
 import { createPinia } from 'pinia'
 import InfluenceSlots from '../components/InfluenceSlots.vue'
 import CapitalBoard from '../components/CapitalBoard.vue'
+import InfluenceCard from '../components/InfluenceCard.vue'
+import MarketBoard from '../components/MarketBoard.vue'
 import { usePreviewStore } from '../ux/mockStore'
 
 afterEach(() => vi.unstubAllGlobals())
+
+it.each([3, -3] as const)('shows the correct arrow for a compact %i market card', async delta => {
+  const html = await renderToString(createSSRApp({ render: () => h(InfluenceCard, { card: { id: 'single', kind: 'single', company: 'REDSTONE', delta }, compact: true }) }))
+  expect(html).toContain(`class="card-mini__icon" aria-hidden="true">${delta > 0 ? '↑' : '↓'}</span>`)
+  expect(html).toContain(`aria-label="REDSTONE ${delta > 0 ? '+' : ''}${delta}"`)
+})
+
+it('shows the 2–7 price range and matching levels on the main board', async () => {
+  vi.stubGlobal('location', { search: '?device=tv&state=playing' })
+  const pinia = createPinia()
+  usePreviewStore(pinia)
+  const html = await renderToString(createSSRApp({ render: () => h(MarketBoard) }).use(pinia))
+  expect(html.match(/aria-valuemin="2" aria-valuemax="7" aria-valuenow="4"/g)).toHaveLength(3)
+  expect(html.match(/--price-level:40%/g)).toHaveLength(3)
+  expect(html.match(/company-thermometer__limit" aria-hidden="true">7<\/span>/g)).toHaveLength(3)
+  expect(html.match(/company-thermometer__limit" aria-hidden="true">2<\/span>/g)).toHaveLength(3)
+})
 
 describe('influence slots', () => {
   it('shows static slots on the board and interactive slots for the player', async () => {

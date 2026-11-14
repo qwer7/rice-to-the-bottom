@@ -49,15 +49,15 @@ describe('Influence cards and victory', () => {
       { REDSTONE: 1, BLUEWELL: 0, GOLDSPARK: 0 },
     ])
   })
-  it('pays dividends for every share and doubles them for each complete set of five', () => {
+  it('pays one dollar per share without doubling complete sets of five', () => {
     const { state, privatePlayers } = setup(); state.phase = 'reveal'
     state.players[0].influenceCards = ['dividends']
     state.players[0].portfolio = { REDSTONE: 5, BLUEWELL: 5, GOLDSPARK: 4 }
-    state.companies[0].price = 6; state.companies[1].price = 5; state.companies[2].price = 9
-    expect(dividendAmount(state, state.players[0])).toBe(24)
+    state.companies[0].price = 6; state.companies[1].price = 5; state.companies[2].price = 7
+    expect(dividendAmount(state, state.players[0])).toBe(14)
     const next = nextRound(state, privatePlayers).state
-    expect(next.players[0].balance).toBe(54)
-    expect(next.dividends).toContainEqual({ playerId: 'a', amount: 24 })
+    expect(next.players[0].balance).toBe(44)
+    expect(next.dividends).toContainEqual({ playerId: 'a', amount: 14 })
     state.players[0].portfolio = { REDSTONE: 0, BLUEWELL: 1, GOLDSPARK: 4 }
     expect(dividendAmount(state, state.players[0])).toBe(5)
   })
@@ -65,17 +65,18 @@ describe('Influence cards and victory', () => {
     const { state } = setup(); state.players[0].influenceCards = ['lucky']; state.players[0].portfolio.REDSTONE = 1; state.companies[0].price = 6
     expect(previewTurn(state, 'a', [{ companyId: 'REDSTONE', action: 'sell' }]).players[0].balance).toBe(37)
   })
-  it('lets the analyst exchange after five exchanges and pays 7 only when unused', () => {
+  it('lets the analyst exchange after five exchanges and pays 5 only when unused', () => {
     const first = setup(); first.state.players[0].influenceCards = ['analyst']; first.privatePlayers.a.exchangesUsed = 5
     const exchanged = exchangeCard(first.state, 'a', first.privatePlayers.a, first.privatePlayers.a.hand[0].id)
     expect(exchanged.exchangesUsed).toBe(6)
     first.privatePlayers.a = exchanged
     const used = play(first.state, first.privatePlayers)
+    expect(used.state.players[0].balance).toBe(30)
     expect(used.state.lastReveal?.moneyChanges?.some(change => change.playerId === 'a' && change.source === 'analyst')).toBe(false)
     const second = setup(); second.state.players[0].influenceCards = ['analyst']
     const unused = play(second.state, second.privatePlayers)
-    expect(unused.state.players[0].balance).toBe(37)
-    expect(unused.state.lastReveal?.moneyChanges).toContainEqual({ playerId: 'a', source: 'analyst', amount: 7 })
+    expect(unused.state.players[0].balance).toBe(35)
+    expect(unused.state.lastReveal?.moneyChanges).toContainEqual({ playerId: 'a', source: 'analyst', amount: 5 })
   })
   it('waits for the leader to open the results after simultaneous victory purchases', () => {
     const { state, privatePlayers } = setup()

@@ -25,7 +25,7 @@ const artwork = computed(() => ({ '--image-a': rows.value[0].company ? `url("${c
 <template>
   <div v-if="compact" class="card-mini" :class="{ 'card-mini--single': card.kind === 'single' }" :style="[cardTheme(card), artwork]" role="img" :aria-label="description" :title="description">
     <div class="market-card-art" aria-hidden="true"><span></span><span></span></div>
-    <span v-if="card.kind === 'single'" class="card-mini__icon" aria-hidden="true">↓</span>
+    <span v-if="card.kind === 'single'" class="card-mini__icon" aria-hidden="true">{{ card.delta > 0 ? '↑' : '↓' }}</span>
     <template v-for="(effect,index) in effects" :key="effect.company"><span v-if="card.kind === 'swap' && index === 1" class="card-mini__icon" aria-hidden="true">⇄</span><span class="card-mini__effect" :style="{ color: companyMeta(effect.company).color }" aria-hidden="true"><i v-if="card.kind === 'swap'"></i><strong v-if="effect.delta !== undefined">{{ effect.delta > 0 ? '+' : '−' }}{{ Math.abs(effect.delta) }}</strong></span></template>
   </div>
   <div v-else class="influence-card" :style="[cardTheme(card), artwork]" role="img" :aria-label="description">

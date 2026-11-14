@@ -1,6 +1,6 @@
 import { computed, ref, toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import { addPlayer, canBuy, canSell, createDeck, createDisplayLobby, createLobby, createPrivateState, playerView, startGame, influenceCardPrice as getInfluenceCardPrice, VICTORY_CARD_PRICE, totalCapital, trade, type CompanyId, type PlayerView, type Turn } from '../../supabase/functions/_shared/game'
+import { addPlayer, canBuy, canSell, createDeck, createDisplayLobby, createLobby, createPrivateState, playerView, startGame, influenceCardPrice as getInfluenceCardPrice, ANALYST_BONUS, VICTORY_CARD_PRICE, totalCapital, trade, type CompanyId, type PlayerView, type Turn } from '../../supabase/functions/_shared/game'
 import { updateMarketHistory } from '@/game/marketHistory'
 
 // Register a store with the same id before mounting the real components. It never
@@ -42,7 +42,7 @@ export const usePreviewStore = defineStore('game', () => {
     const deck = createDeck()
     const sampleCards = [deck.find(card => card.kind === 'pair')!, deck.find(card => card.kind === 'single' && card.company === 'GOLDSPARK' && card.delta > 0)!, deck.find(card => card.kind === 'single' && card.delta < 0)!, deck.find(card => card.kind === 'swap')!]
     if (board) { initial.players[0].balance = 20; initial.players[1].balance = 20; initial.players[2].balance = 45; initial.players[2].influenceCards = ['tax']; initial.players[3].balance = 25 }
-    initial.lastReveal = { round: 3, cards: initial.players.map((p, i) => ({ playerId: p.id, card: sampleCards[i] })), pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 }, purchases: [{ playerId: 'player-2', purchase: 'broker' }, { playerId: 'player-3', purchase: 'tax' }], effects: [], moneyChanges: [{ playerId: 'player-1', source: 'tax', amount: -20 }, { playerId: 'player-2', source: 'tax', amount: -20 }, { playerId: 'player-4', source: 'tax', amount: -25 }, { playerId: 'player-3', source: 'tax', amount: 25 }, { playerId: 'player-4', source: 'lucky', amount: 2 }, { playerId: 'player-1', source: 'analyst', amount: 7 }] }
+    initial.lastReveal = { round: 3, cards: initial.players.map((p, i) => ({ playerId: p.id, card: sampleCards[i] })), pricesBefore: { REDSTONE: 4, BLUEWELL: 5, GOLDSPARK: 6 }, pricesAfter: { REDSTONE: 6, BLUEWELL: 3, GOLDSPARK: 7 }, deltas: { REDSTONE: 2, BLUEWELL: -2, GOLDSPARK: 1 }, purchases: [{ playerId: 'player-2', purchase: 'broker' }, { playerId: 'player-3', purchase: 'tax' }], effects: [], moneyChanges: [{ playerId: 'player-1', source: 'tax', amount: -20 }, { playerId: 'player-2', source: 'tax', amount: -20 }, { playerId: 'player-4', source: 'tax', amount: -25 }, { playerId: 'player-3', source: 'tax', amount: 25 }, { playerId: 'player-4', source: 'lucky', amount: 2 }, { playerId: 'player-1', source: 'analyst', amount: ANALYST_BONUS }] }
     if (initial.phase === 'finished' || scenario === 'reveal-victory') initial.winnerIds = scenario === 'tie' ? ['player-1', 'player-2'] : ['player-1']
   }
   const game = ref(initial)

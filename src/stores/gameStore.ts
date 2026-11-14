@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import type { RealtimeChannel } from '@supabase/supabase-js'
-import { canBuy as mayBuy, canSell as maySell, totalCapital, previewTurn, influenceCardPrice as getInfluenceCardPrice, DEFAULT_INFLUENCE_CARD_PRICE, VICTORY_CARD_PRICE, type Turn, type TradeOrder } from '../../supabase/functions/_shared/game'
+import { canBuy as mayBuy, canSell as maySell, totalCapital, previewTurn, influenceCardPrice as getInfluenceCardPrice, DEFAULT_CONFIG, DEFAULT_INFLUENCE_CARD_PRICE, VICTORY_CARD_PRICE, type Turn, type TradeOrder } from '../../supabase/functions/_shared/game'
 import type { CompanyId, GameState, PlayerView } from '@/game/types'
 import { readMarketHistory, updateMarketHistory, type MarketHistory } from '@/game/marketHistory'
 import { supabase, hasSupabase } from '@/lib/supabase'
@@ -94,8 +94,8 @@ export const useGameStore = defineStore('game', () => {
   const round = computed(() => game.value?.round ?? 0)
   const totalRounds = computed(() => game.value?.config.totalRounds ?? 8)
   const roomCode = computed(() => session.value?.code)
-  const minPrice = computed(() => game.value?.config.minPrice ?? 1)
-  const maxPrice = computed(() => game.value?.config.maxPrice ?? 9)
+  const minPrice = computed(() => game.value?.config.minPrice ?? DEFAULT_CONFIG.minPrice)
+  const maxPrice = computed(() => game.value?.config.maxPrice ?? DEFAULT_CONFIG.maxPrice)
   const winnerIds = computed(() => game.value?.winnerIds)
   const ranking = computed(() => players.value.map(player => ({ player, capital: totalCapital(player, companies.value) })).sort((a,b) => b.capital - a.capital))
   const hasRoom = computed(() => session.value !== null)

@@ -9,9 +9,9 @@ describe('Prices and scoring', () => {
       privatePlayers[id].hand=[{id:'same',kind:'pair',up:'REDSTONE',down:'BLUEWELL',gain:2,loss:1}]
       privatePlayers[id]=selectCard(state,id,privatePlayers[id],'same')
     }
-    state.companies[0].price=8; state.companies[1].price=2
+    state.companies[0].price=6; state.companies[1].price=3
     let result=finishTurn(state,'a',privatePlayers); result=finishTurn(result.state,'b',result.privatePlayers)
-    expect(result.state.companies.map(c=>c.price)).toEqual([9,1,4]); expect(result.state.lastReveal?.deltas).toEqual({REDSTONE:1,BLUEWELL:-1,GOLDSPARK:0})
+    expect(result.state.companies.map(c=>c.price)).toEqual([7,2,4]); expect(result.state.lastReveal?.deltas).toEqual({REDSTONE:1,BLUEWELL:-1,GOLDSPARK:0})
   })
   it('continues after the eighth reveal without a victory card', () => {
     const state=startGame(addPlayer(createLobby('a','А'),'b','Б')); state.round=8; state.phase='reveal'

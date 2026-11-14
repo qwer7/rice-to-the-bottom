@@ -28,10 +28,10 @@ describe('Atomic hidden turns',()=>{
   expect(previewTurn(state,'a',[{...order,action:'sell'},order]).players[0].portfolio.BLUEWELL).toBe(5)
  })
  it('adds and clamps first, then applies swaps in player order',()=>{
-  let {state,privatePlayers}=setup(); state.companies[0].price=8; state.companies[1].price=3
+  let {state,privatePlayers}=setup(); state.companies[0].price=6; state.companies[1].price=3
   const cards:Card[]=[{id:'red-plus',kind:'single',company:'REDSTONE',delta:3},{id:'swap',kind:'swap',a:'REDSTONE',b:'BLUEWELL'}]
   for(const [i,id] of ['a','b'].entries()) {privatePlayers[id].hand=[cards[i]]; ({state,privatePlayers}=submitTurn(state,id,privatePlayers,{id:`swap-test-${id}`,round:1,trades:[],cardId:cards[i].id}))}
-  expect(state.companies.map(c=>c.price)).toEqual([3,9,4])
+  expect(state.companies.map(c=>c.price)).toEqual([3,7,4])
  })
  it('retains the five-exchange budget across rounds and conserves all 21 cards',()=>{
   let {state,privatePlayers}=setup()
